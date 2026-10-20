@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopee Electronics Intelligence Dashboard • Điện Máy Gia Khang</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(51, 65, 85, 0.4);
+    }
+    .glass-card:hover {
+      border-color: rgba(100, 116, 139, 0.5);
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .animate-shake {
+      animation: shake 0.4s ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-[#0b1120] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-orange-500 selection:text-white">
+
+  <!-- ================= AUTHENTICATION GATE MODAL ================= -->
+  <div id="authOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-xl p-4 transition-all duration-300">
+    <div class="w-full max-w-md bg-slate-900/90 border border-slate-700/60 rounded-3xl p-7 shadow-2xl relative overflow-hidden">
+      <!-- Glow ambient light -->
+      <div class="absolute -top-24 -left-24 w-48 h-48 bg-orange-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="relative z-10 text-center">
+        <!-- Shield Icon -->
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-400 p-0.5 shadow-lg shadow-orange-500/20">
+          <div class="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center">
+            <svg class="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+        </div>
+
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20 mb-2">
+          Điện Máy Gia Khang • Private Access
+        </span>
+        <h2 class="text-xl font-bold text-white tracking-tight">Xác Thực Truy Cập Dashboard</h2>
+        <p class="text-xs text-slate-400 mt-1 mb-6">
+          Hệ thống theo dõi thị trường & giá bán 45 gian hàng điện máy Shopee
+        </p>
+
+        <!-- Form -->
+        <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4 text-left">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Mật mã truy cập (Passcode)</label>
+            <div class="relative">
+              <input type="password" id="authPassword" autofocus placeholder="Nhập mã bảo mật (Ví dụ: GK-8888)" 
+                     class="w-full bg-slate-800/80 text-white placeholder-slate-500 text-sm rounded-xl px-4 py-3 border border-slate-700 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition pr-11 font-mono tracking-wider">
+              <button type="button" onclick="togglePassVisibility()" class="absolute right-3 top-3 text-slate-400 hover:text-slate-200">
+                <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs">
+            <label class="flex items-center gap-2 text-slate-400 cursor-pointer select-none">
+              <input type="checkbox" id="rememberMe" checked class="rounded border-slate-700 bg-slate-800 text-orange-500 focus:ring-0 w-3.5 h-3.5">
+              <span>Ghi nhớ phiên trên thiết bị này</span>
+            </label>
+            <span class="text-[11px] text-slate-500">Mã cấp quyền: <strong class="text-slate-400 font-mono">GK-8888</strong></span>
+          </div>
+
+          <!-- Error Message Banner -->
+          <div id="authError" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3.5 py-2.5 rounded-xl flex items-center gap-2">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span id="authErrorMsg">Mã truy cập không hợp lệ. Vui lòng kiểm tra lại!</span>
+          </div>
+
+          <button type="submit" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold text-sm shadow-lg shadow-orange-500/25 transition flex items-center justify-center gap-2 group">
+            <span>Mở Khóa Dashboard</span>
+            <svg class="w-4 h-4 group-hover:translate-x-0.5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          </button>
+        </form>
+
+        <div class="mt-6 pt-4 border-t border-slate-800 text-[11px] text-slate-500">
+          Nguồn dữ liệu: Supabase PostgreSQL • Đồng bộ Lark Base
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN DASHBOARD APPLICATION ================= -->
+  <div id="dashboardApp" class="hidden flex-1 flex flex-col p-4 md:p-8 max-w-7xl mx-auto w-full">
+
+    <!-- TOP HEADER -->
+    <header class="mb-8">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+        <div>
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 font-bold text-2xl shadow-inner">
+              🛒
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-2xl font-bold tracking-tight text-white">Shopee Electronics Intelligence</h1>
+                <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  ● Live Postgres
+                </span>
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                  GK-8888 Secured
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">
+                Chỉ mục 45 gian hàng • 2,322 SKU cào chi tiết • Độc quyền Điện Máy Gia Khang
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lark Base Direct Web Action Links (FIXED: Không dùng applink) -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Lark Link 1: 45 Shops -->
+          <a href="https://jsgf1m9q34s9.sg.larksuite.com/base/Q4q5bLrbSaQu2VskmO5l1xE5gwf?table=tblhcMxvrA29zpEo" 
+             target="_blank" rel="noopener noreferrer"
+             title="Mở bảng Chỉ Mục 45 Shop trực tiếp trên trình duyệt Lark Base"
+             class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition shadow-sm">
+            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <span>Lark 45 Shop</span>
+          </a>
+
+          <!-- Lark Link 2: 34 Brands -->
+          <a href="https://jsgf1m9q34s9.sg.larksuite.com/base/Q4q5bLrbSaQu2VskmO5l1xE5gwf?table=tblzNLnFUkGFr2wB" 
+             target="_blank" rel="noopener noreferrer"
+             title="Mở bảng Dashboard Thống Kê 34 Thương Hiệu trên Lark Base"
+             class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition shadow-sm">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path></svg>
+            <span>Lark 34 Hãng</span>
+          </a>
+
+          <!-- Lark Link 3: Products -->
+          <a href="https://jsgf1m9q34s9.sg.larksuite.com/base/Q4q5bLrbSaQu2VskmO5l1xE5gwf?table=tblRMkw4sZCXIXMH" 
+             target="_blank" rel="noopener noreferrer"
+             title="Mở bảng Sản Phẩm & Giá Bán trên Lark Base"
+             class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border border-orange-500/30 transition shadow-sm">
+            <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+            <span>Lark Sản Phẩm</span>
+          </a>
+
+          <!-- Lock Button -->
+          <button onclick="lockDashboard()" title="Khóa màn hình truy cập" class="p-2 text-slate-400 hover:text-rose-400 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 rounded-xl transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- METRICS OVERVIEW (6 CARDS) -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 mt-6">
+        <div class="glass-card rounded-2xl p-4 shadow-sm">
+          <div class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider mb-1">Tổng Gian Hàng</div>
+          <div class="text-2xl font-bold text-white">45 <span class="text-xs font-normal text-slate-400">shop</span></div>
+          <div class="text-[11px] text-emerald-400 font-medium mt-1">30 Brand • 15 Tổng hợp</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 shadow-sm">
+          <div class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider mb-1">Shopee Mall</div>
+          <div class="text-2xl font-bold text-rose-400">36 <span class="text-xs font-normal text-slate-400">gian</span></div>
+          <div class="text-[11px] text-slate-400 mt-1">80.0% tổng số shop</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 shadow-sm">
+          <div class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider mb-1">Tổng Followers</div>
+          <div class="text-2xl font-bold text-blue-400">7.42M</div>
+          <div class="text-[11px] text-blue-300 font-medium mt-1">7,415,974 theo dõi</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 shadow-sm">
+          <div class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider mb-1">Tổng SKU Gian Hàng</div>
+          <div class="text-2xl font-bold text-amber-400">26,006</div>
+          <div class="text-[11px] text-amber-300 font-medium mt-1">Đã cào sâu 2,322 SKU</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 shadow-sm">
+          <div class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider mb-1">Đánh Giá Trung Bình</div>
+          <div class="text-2xl font-bold text-amber-300 flex items-center gap-1">
+            4.85 <span class="text-sm">⭐</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-1">1,206,346 đánh giá</div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-4 shadow-sm">
+          <div class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider mb-1">Snapshot DB Giá</div>
+          <div class="text-2xl font-bold text-indigo-400">3,957</div>
+          <div class="text-[11px] text-indigo-300 font-medium mt-1">Supabase Single Source</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <div class="flex items-center gap-2 border-b border-slate-800 mb-6 overflow-x-auto pb-1">
+      <button onclick="switchTab('shops')" id="tab-shops-btn" class="px-4 py-2.5 text-xs font-semibold border-b-2 border-orange-500 text-orange-400 transition flex items-center gap-2 whitespace-nowrap">
+        🏪 Danh Sách 45 Gian Hàng
+      </button>
+      <button onclick="switchTab('charts')" id="tab-charts-btn" class="px-4 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+        📊 Biểu Đồ & Thống Kê Thị Trường
+      </button>
+      <button onclick="switchTab('products')" id="tab-products-btn" class="px-4 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+        🔥 Top 100 Sản Phẩm Bán Chạy (Bestsellers)
+      </button>
+      <button onclick="switchTab('brands')" id="tab-brands-btn" class="px-4 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+        🏷️ Thống Kê 34 Thương Hiệu Điện Máy
+      </button>
+    </div>
+
+    <!-- TAB 1: SHOPS TABLE -->
+    <section id="tab-shops" class="space-y-4">
+      <div class="glass-card rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-medium text-slate-400 mr-1">Phân loại:</span>
+          <button onclick="filterType('all')" id="filter-all" class="filter-btn active px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500 text-white transition">Tất cả (45)</button>
+          <button onclick="filterType('Brand Shop')" id="filter-brand" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Brand Shop (31)</button>
+          <button onclick="filterType('Điện máy tổng hợp')" id="filter-general" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Điện máy tổng hợp (14)</button>
+          <button onclick="filterType('Shopee Mall')" id="filter-mall" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Shopee Mall (37)</button>
+        </div>
+
+        <div class="relative w-full md:w-80">
+          <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Tìm tên shop, username, thương hiệu..." 
+                 class="w-full bg-slate-900/90 text-white placeholder-slate-500 text-xs rounded-xl pl-9 pr-3 py-2.5 border border-slate-700 focus:outline-none focus:border-orange-500 transition">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-800/80 text-slate-400 border-b border-slate-700/80 font-semibold uppercase tracking-wider text-[11px]">
+                <th class="py-3.5 px-4 w-12 text-center">STT</th>
+                <th class="py-3.5 px-4 cursor-pointer hover:text-white" onclick="sortTable('name')">Gian Hàng / Thương Hiệu ↕</th>
+                <th class="py-3.5 px-3">Danh Hiệu</th>
+                <th class="py-3.5 px-3">Phân Loại</th>
+                <th class="py-3.5 px-3 text-right cursor-pointer hover:text-white" onclick="sortTable('followers')">Followers ↕</th>
+                <th class="py-3.5 px-3 text-right cursor-pointer hover:text-white" onclick="sortTable('item_count')">SKU Catalog ↕</th>
+                <th class="py-3.5 px-3 text-center cursor-pointer hover:text-white" onclick="sortTable('rating')">Đánh Giá ↕</th>
+                <th class="py-3.5 px-3 text-center">Chat</th>
+                <th class="py-3.5 px-3">Tỉnh Thành</th>
+                <th class="py-3.5 px-4 text-right">Xem Shop</th>
+              </tr>
+            </thead>
+            <tbody id="shopTableBody" class="divide-y divide-slate-800/80 text-slate-300">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="p-3 bg-slate-900/60 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span id="showingCount">Đang hiển thị 45 / 45 gian hàng</span>
+          <span>Dữ liệu xác thực từ Supabase PostgreSQL</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: CHARTS & VISUALIZATIONS -->
+    <section id="tab-charts" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Chart 1: Top Followers -->
+        <div class="glass-card rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-semibold text-sm text-white">Top 10 Gian Hàng Có Người Theo Dõi Lớn Nhất</h3>
+              <p class="text-xs text-slate-400">Nhận diện thương hiệu & sức hút người dùng trên Shopee</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-400 font-medium">Followers</span>
+          </div>
+          <div class="relative h-72">
+            <canvas id="chartFollowers"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Top SKU -->
+        <div class="glass-card rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-semibold text-sm text-white">Top 10 Gian Hàng Có Số SKU Danh Mục Lớn Nhất</h3>
+              <p class="text-xs text-slate-400">Quy mô phân phối & độ phủ dải sản phẩm</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 font-medium">SKU Count</span>
+          </div>
+          <div class="relative h-72">
+            <canvas id="chartSku"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 3: Shop Types -->
+        <div class="glass-card rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-semibold text-sm text-white">Cơ Cấu Phân Loại Gian Hàng Điện Máy</h3>
+              <p class="text-xs text-slate-400">Tỷ trọng Official Brand Shop vs Điện máy chuỗi bán lẻ</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-medium">Phân Loại</span>
+          </div>
+          <div class="relative h-72 flex items-center justify-center">
+            <canvas id="chartType"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 4: Shopee Mall Ratio -->
+        <div class="glass-card rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-semibold text-sm text-white">Tỷ Trọng Danh Hiệu Shopee Mall</h3>
+              <p class="text-xs text-slate-400">Mức độ cam kết gian hàng chính hãng Shopee Mall</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 font-medium">Shopee Mall</span>
+          </div>
+          <div class="relative h-72 flex items-center justify-center">
+            <canvas id="chartMall"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: BESTSELLER PRODUCTS -->
+    <section id="tab-products" class="space-y-4 hidden">
+      <div class="glass-card rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-semibold text-slate-300">🔥 Top 100 Sản Phẩm Có Doanh Số Cao Nhất:</span>
+          <span class="text-xs px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20 font-medium">
+            2,322 SKU Đã Cào
+          </span>
+        </div>
+        <div class="relative w-full md:w-80">
+          <input type="text" id="prodSearchInput" oninput="handleProdSearch()" placeholder="Tìm model, tên sản phẩm, gian hàng..." 
+                 class="w-full bg-slate-900/90 text-white placeholder-slate-500 text-xs rounded-xl pl-9 pr-3 py-2.5 border border-slate-700 focus:outline-none focus:border-orange-500 transition">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-800/80 text-slate-400 border-b border-slate-700/80 font-semibold uppercase tracking-wider text-[11px]">
+                <th class="py-3.5 px-4 w-12 text-center">Top</th>
+                <th class="py-3.5 px-4">Tên Sản Phẩm / Model</th>
+                <th class="py-3.5 px-3">Gian Hàng</th>
+                <th class="py-3.5 px-3">Nhóm Ngành</th>
+                <th class="py-3.5 px-3 text-right">Giá Bán</th>
+                <th class="py-3.5 px-3 text-center">Giảm Giá</th>
+                <th class="py-3.5 px-3 text-right">Đã Bán Tổng</th>
+                <th class="py-3.5 px-3 text-right">Bán / Tháng</th>
+                <th class="py-3.5 px-3 text-center">Đánh Giá</th>
+                <th class="py-3.5 px-4 text-right">Link Mua</th>
+              </tr>
+            </thead>
+            <tbody id="prodTableBody" class="divide-y divide-slate-800/80 text-slate-300">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="p-3 bg-slate-900/60 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span id="showingProdCount">Đang hiển thị 100 sản phẩm bán chạy nhất</span>
+          <span>Dữ liệu bóc tách từ Shopee API Frontend</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: 34 BRANDS -->
+    <section id="tab-brands" class="space-y-4 hidden">
+      <div class="glass-card rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-semibold text-slate-300">🏷️ Tổng Hợp 34 Thương Hiệu Điện Máy Shopee:</span>
+          <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">
+            Tự Động Gom Nhóm Từ 45 Shop
+          </span>
+        </div>
+        <div class="relative w-full md:w-80">
+          <input type="text" id="brandSearchInput" oninput="handleBrandSearch()" placeholder="Tìm thương hiệu..." 
+                 class="w-full bg-slate-900/90 text-white placeholder-slate-500 text-xs rounded-xl pl-9 pr-3 py-2.5 border border-slate-700 focus:outline-none focus:border-orange-500 transition">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-800/80 text-slate-400 border-b border-slate-700/80 font-semibold uppercase tracking-wider text-[11px]">
+                <th class="py-3.5 px-4 w-12 text-center">STT</th>
+                <th class="py-3.5 px-4">Thương Hiệu / Chuỗi</th>
+                <th class="py-3.5 px-3">Phân Loại</th>
+                <th class="py-3.5 px-3 text-center">Số Shop</th>
+                <th class="py-3.5 px-3 text-right">Tổng Followers</th>
+                <th class="py-3.5 px-3 text-right">Tổng SKU</th>
+                <th class="py-3.5 px-3 text-right">SKU Đã Cào</th>
+                <th class="py-3.5 px-3 text-center">Đánh Giá</th>
+                <th class="py-3.5 px-4">Sản Phẩm Tiêu Biểu Bán Chạy</th>
+                <th class="py-3.5 px-3 text-right">Đã Bán</th>
+                <th class="py-3.5 px-4 text-right">Shop Chính</th>
+              </tr>
+            </thead>
+            <tbody id="brandTableBody" class="divide-y divide-slate-800/80 text-slate-300">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="p-3 bg-slate-900/60 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span id="showingBrandCount">Đang hiển thị 34 thương hiệu</span>
+          <span>Đã đồng bộ sang Lark Base Dashboard</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="mt-12 py-6 border-t border-slate-800 text-center text-xs text-slate-500">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          Hệ thống Market Intelligence Shopee • Phát triển bởi <strong>Điện Máy Gia Khang</strong>
+        </div>
+        <div class="flex items-center gap-4 text-slate-400">
+          <span>Supabase Postgres</span>
+          <span>•</span>
+          <span>Lark Base Sync</span>
+          <span>•</span>
+          <span>Chrome CDP Crawler</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- CLIENT-SIDE LOGIC & SCRIPTS -->
+  <script>
+    // Raw Data injected
+    const SHOPS_DATA = [{"username": "sunhouse.official", "shopid": 18183995, "name": "SUNHOUSE OFFICIAL STORE", "type": "Brand Shop", "brand": "Sunhouse", "badge": "Shopee Mall", "followers": 843923, "item_count": 423, "rating": 4.85, "total_ratings": 344003, "rating_good": 331721, "rating_normal": 7831, "rating_bad": 4451, "response_rate": "100%", "city": "Thành phố Hà Nội", "join_date": "2017-03-14", "url": "https://shopee.vn/sunhouse.official"}, {"username": "samsung_official_store", "shopid": 65589552, "name": "SAMSUNG OFFICIAL STORE", "type": "Brand Shop", "brand": "Samsung", "badge": "Shopee Mall", "followers": 743219, "item_count": 1025, "rating": 4.85, "total_ratings": 127993, "rating_good": 123290, "rating_normal": 2264, "rating_bad": 2439, "response_rate": "100%", "city": "Thành phố Hồ Chí Minh", "join_date": "2018-04-18", "url": "https://shopee.vn/samsung_official_store"}, {"username": "bluestone_vietnam", "shopid": 189615586, "name": "BlueStone | Official Store", "type": "Brand Shop", "brand": "BlueStone", "badge": "Shopee Mall", "followers": 573734, "item_count": 215, "rating": 4.88, "total_ratings": 60752, "rating_good": 59083, "rating_normal": 951, "rating_bad": 718, "response_rate": "100%", "city": "Thành phố Hồ Chí Minh", "join_date": "2019-10-18", "url": "https://shopee.vn/bluestone_vietnam"}, {"username": "kangaroo_shopping", "shopid": 316170416, "name": "Kangaroo_Official_Store", "type": "Brand Shop", "brand": "Kangaroo", "badge": "Shopee Mall", "followers": 454869, "item_count": 889, "rating": 4.81, "total_ratings": 68536, "rating_good": 65364, "rating_normal": 1624, "rating_bad": 1548, "response_rate": "100%", "city": "Tỉnh Hưng Yên", "join_date": "2020-09-30", "url": "https://shopee.vn/kangaroo_shopping"}, {"username": "shopdunk_official_store", "shopid": 288286284, "name": "ShopDunk Official Store", "type": "Điện máy tổng hợp", "brand": "ShopDunk", "badge": "Shopee Mall", "followers": 449803, "item_count": 1011, "rating": 4.94, "total_ratings": 47289, "rating_good": 46658, "rating_normal": 315, "rating_bad": 316, "response_rate": "100%", "city": "Thành phố Hà Nội", "join_date": "2020-07-23", "url": "https://shopee.vn/shopdunk_official_store"}, {"username": "panasonic_official", "shopid": 189431669, "name": "Panasonic Official Store", "type": "Brand Shop", "brand": "Panasonic", "badge": "Shopee Mall", "followers": 448278, "item_count": 345, "rating": 4.9, "total_ratings": 47177, "rating_good": 46089, "rating_normal": 642, "rating_bad": 446, "response_rate": "100%", "city": "Thành phố Hà Nội", "join_date": "2019-10-18", "url": "https://shopee.vn/panasonic_official"}, {"username": "sharp_official_store", "shopid": 267127101, "name": "sharp_official_store", "type": "Brand Shop", "brand": "Sharp", "badge": "Shopee Mall", "followers": 427032, "item_count": 156, "rating": 4.86, "total_ratings": 20577, "rating_good": 19882, "rating_normal": 340, "rating_bad": 355, "response_rate": "100%", "city": "TP. Hồ Chí Minh", "join_date": "2020-05-27", "url": "https://shopee.vn/sharp_official_store"}, {"username": "lgbrandshop", "shopid": 1340449161, "name": "LG Brand Shop", "type": "Brand Shop", "brand": "LG", "badge": "Shopee Mall", "followers": 374790, "item_count": 323, "rating": 4.88, "total_ratings": 6214, "rating_good": 6046, "rating_normal": 70, "rating_bad": 98, "response_rate": "100%", "city": "Thành phố Hồ Chí Minh", "join_date": "2024-08-23", "url": "https://shopee.vn/lgbrandshop"}, {"username": "xiaomiofficialstore", "shopid": 340431675, "name": "Xiaomi Mobile Authorized Store", "type": "Brand Shop", "brand": "Xiaomi", "badge": "Shopee Mall", "followers": 372800, "item_count": 42, "rating": 4.9, "total_ratings": 29489, "rating_good": 28829, "rating_normal": 380, "rating_bad": 280, "response_rate": "96%", "city": "Thành phố Hồ Chí Minh", "join_date": "2020-11-17", "url": "https://shopee.vn/xiaomiofficialstore"}, {"username": "tefal_vn_official", "shopid": 254657873, "name": "Tefal VN Official", "type": "Brand Shop", "brand": "Tefal", "badge": "Shopee Mall", "followers": 341308, "item_count": 518, "rating": 4.85, "total_ratings": 95339, "rating_good": 91790, "rating_normal": 2055, "rating_bad": 1494, "response_rate": "99%", "city": "TP. Hồ Chí Minh", "join_date": "2020-04-27", "url": "https://shopee.vn/tefal_vn_official"}, {"username": "philips_homeappliances", "shopid": 284593651, "name": "philips_homeappliances_official", "type": "Brand Shop", "brand": "Philips", "badge": "Shopee Mall", "followers": 291509, "item_count": 334, "rating": 4.86, "total_ratings": 77295, "rating_good": 74615, "rating_normal": 1363, "rating_bad": 1317, "response_rate": "100%", "city": "TP. Hồ Chí Minh", "join_date": "2020-07-13", "url": "https://shopee.vn/philips_homeappliances"}, {"username": "sonystoreonline", "shopid": 1152330179, "name": "Sony Store Online", "type": "Brand Shop", "brand": "Sony", "badge": "Shopee Mall", "followers": 266322, "item_count": 111, "rating": 4.89, "total_ratings": 9891, "rating_good": 9634, "rating_normal": 117, "rating_bad": 140, "response_rate": "92%", "city": "TP. Hồ Chí Minh", "join_date": "2023-12-28", "url": "https://shopee.vn/sonystoreonline"}, {"username": "coocaa_official_store", "shopid": 131201661, "name": "Coocaa Official Store", "type": "Brand Shop", "brand": "Coocaa", "badge": "Shopee Mall", "followers": 259936, "item_count": 30, "rating": 4.85, "total_ratings": 18730, "rating_good": 18089, "rating_normal": 310, "rating_bad": 331, "response_rate": "100%", "city": "TP. Hồ Chí Minh", "join_date": "2019-03-05", "url": "https://shopee.vn/coocaa_official_store"}, {"username": "aqua_official_store", "shopid": 800768321, "name": "AQUA Official Store", "type": "Brand Shop", "brand": "Aqua", "badge": "Shopee Mall", "followers": 258423, "item_count": 233, "rating": 4.82, "total_ratings": 9857, "rating_good": 9415, "rating_normal": 218, "rating_bad": 224, "response_rate": "100%", "city": "Đồng Nai", "join_date": "2022-06-22", "url": "https://shopee.vn/aqua_official_store"}, {"username": "sony_official_store", "shopid": 92564297, "name": "Sony Authorized Store", "type": "Brand Shop", "brand": "Sony", "badge": "Shopee Mall", "followers": 135757, "item_count": 234, "rating": 4.83, "total_ratings": 20856, "rating_good": 20016, "rating_normal": 496, "rating_bad": 344, "response_rate": "N/A", "city": "TP. Hồ Chí Minh", "join_date": "2018-09-25", "url": "https://shopee.vn/sony_official_store"}, {"username": "pico.vn", "shopid": 1128623948, "name": "Pico Official", "type": "Điện máy tổng hợp", "brand": "Pico", "badge": "Shopee Mall", "followers": 107941, "item_count": 903, "rating": 4.9, "total_ratings": 19435, "rating_good": 19003, "rating_normal": 218, "rating_bad": 214, "response_rate": "100%", "city": "Thành phố Hà Nội", "join_date": "2023-11-28", "url": "https://shopee.vn/pico.vn"}, {"username": "lg_shopdunk", "shopid": 1589711962, "name": "LG Authorized Store", "type": "Chưa phân loại", "brand": "", "badge": "Shopee Mall", "followers": 105361, "item_count": 70, "rating": 4.89, "total_ratings": 1244, "rating_good": 1211, "rating_normal": 20, "rating_bad": 13, "response_rate": "100%", "city": "Hà Nội", "join_date": "2025-07-18", "url": "https://shopee.vn/lg_shopdunk"}, {"username": "casper_officialstore", "shopid": 961746045, "name": "Casper Official Store", "type": "Brand Shop", "brand": "Casper", "badge": "Shopee Mall", "followers": 105054, "item_count": 58, "rating": 4.76, "total_ratings": 14158, "rating_good": 13286, "rating_normal": 405, "rating_bad": 467, "response_rate": "100%", "city": "Thành phố Hà Nội", "join_date": "2023-03-01", "url": "https://shopee.vn/casper_officialstore"}, {"username": "gigadigital", "shopid": 699395814, "name": "Giga Digital", "type": "Điện máy tổng hợp", "brand": "Giga Digital", "badge": "Yêu thích+", "followers": 103189, "item_count": 988, "rating": 4.91, "total_ratings": 42223, "rating_good": 41434, "rating_normal": 513, "rating_bad": 276, "response_rate": "100%", "city": "Hà Nội", "join_date": "2022-02-26", "url": "https://shopee.vn/gigadigital"}, {"username": "shopdunkplus", "shopid": 1234660887, "name": "ShopDunk Plus", "type": "Điện máy tổng hợp", "brand": "ShopDunk", "badge": "Shopee Mall", "followers": 98874, "item_count": 952, "rating": 4.92, "total_ratings": 6266, "rating_good": 6161, "rating_normal": 54, "rating_bad": 51, "response_rate": "100%", "city": "Thành phố Hà Nội", "join_date": "2024-04-16", "url": "https://shopee.vn/shopdunkplus"}, {"username": "nguyenkim.electronics", "shopid": 706762797, "name": "Nguyễn Kim Electronics", "type": "Điện máy tổng hợp", "brand": "Nguyễn Kim", "badge": "Shopee Mall", "followers": 85290, "item_count": 4814, "rating": 4.8, "total_ratings": 41693, "rating_good": 39571, "rating_normal": 843, "rating_bad": 1279, "response_rate": "94%", "city": "Thành phố Hồ Chí Minh", "join_date": "2022-03-04", "url": "https://shopee.vn/nguyenkim.electronics"}, {"username": "electroluxofficialstore", "shopid": 928724640, "name": "Electrolux Official Store", "type": "Brand Shop", "brand": "Electrolux", "badge": "Shopee Mall", "followers": 66696, "item_count": 143, "rating": 4.85, "total_ratings": 22749, "rating_good": 21885, "rating_normal": 421, "rating_bad": 443, "response_rate": "98%", "city": "Thành phố Hà Nội", "join_date": "2022-12-29", "url": "https://shopee.vn/electroluxofficialstore"}, {"username": "toshibapremiumstore", "shopid": 1341053720, "name": "Toshiba Premium Store", "type": "Brand Shop", "brand": "Toshiba", "badge": "Shopee Mall", "followers": 56327, "item_count": 65, "rating": 4.86, "total_ratings": 970, "rating_good": 937, "rating_normal": 19, "rating_bad": 14, "response_rate": "100%", "city": "TP. Hồ Chí Minh", "join_date": "2024-08-24", "url": "https://shopee.vn/toshibapremiumstore"}, {"username": "toshiba_official_store", "shopid": 437340083, "name": "Toshiba_Official Store", "type": "Brand Shop", "brand": "Toshiba", "badge": "Shopee Mall", "followers": 52365, "item_count": 156, "rating": 4.9, "total_ratings": 9285, "rating_good": 9070, "rating_normal": 126, "rating_bad": 89, "response_rate": "99%", "city": "TP. Hồ Chí Minh", "join_date": "2021-05-05", "url": "https://shopee.vn/toshiba_official_store"}, {"username": "tcl_flagship_store", "shopid": 492764796, "name": "TCL Flagship Store", "type": "Brand Shop", "brand": "TCL", "badge": "Shopee Mall", "followers": 44303, "item_count": 26, "rating": 4.8, "total_ratings": 3590, "rating_good": 3421, "rating_normal": 60, "rating_bad": 109, "response_rate": "100%", "city": "Thành phố Hồ Chí Minh", "join_date": "2021-07-19", "url": "https://shopee.vn/tcl_flagship_store"}, {"username": "dienmaygiakhang", "shopid": 31863766, "name": "ĐIỆN MÁY GIA KHANG", "type": "Điện máy tổng hợp", "brand": "Điện Máy Gia Khang", "badge": "Shopee Mall", "followers": 43330, "item_count": 2693, "rating": 4.88, "total_ratings": 18140, "rating_good": 17603, "rating_normal": 270, "rating_bad": 267, "response_rate": "100%", "city": "Thành phố Hồ Chí Minh", "join_date": "2017-08-24", "url": "https://shopee.vn/dienmaygiakhang"}, {"username": "sieuthimediamart", "shopid": 514123059, "name": "Siêu thị điện máy MediaMart", "type": "Điện máy tổng hợp", "brand": "MediaMart", "badge": "Thường", "followers": 41570, "item_count": 1392, "rating": 4.79, "total_ratings": 5823, "rating_good": 5511, "rating_normal": 156, "rating_bad": 156, "response_rate": "99%", "city": "Thành phố Hà Nội", "join_date": "2021-08-17", "url": "https://shopee.vn/sieuthimediamart"}, {"username": "hisenseofficialstore", "shopid": 1023474854, "name": "Hisense Official Store", "type": "Brand Shop", "brand": "Hisense", "badge": "Shopee Mall", "followers": 31268, "item_count": 35, "rating": 4.77, "total_ratings": 593, "rating_good": 557, "rating_normal": 15, "rating_bad": 21, "response_rate": "100%", "city": "Thành phố Hồ Chí Minh", "join_date": "2023-06-26", "url": "https://shopee.vn/hisenseofficialstore"}, {"username": "greevietnam", "shopid": 1764774160, "name": "GREE VIET NAM", "type": "Brand Shop", "brand": "Gree", "badge": "Shopee Mall", "followers": 31267, "item_count": 29, "rating": 4.96, "total_ratings": 56, "rating_good": 56, "rating_normal": 0, "rating_bad": 0, "response_rate": "100%", "city": "Thành phố Hà Nội", "join_date": "2026-03-03", "url": "https://shopee.vn/greevietnam"}, {"username": "hitachivietnam.store", "shopid": 1319396247, "name": "Hitachi Home Appliances VN", "type": "Brand Shop", "brand": "Hitachi", "badge": "Shopee Mall", "followers": 30021, "item_count": 55, "rating": 4.81, "total_ratings": 1577, "rating_good": 1503, "rating_normal": 41, "rating_bad": 33, "response_rate": "100%", "city": "Hà Nội", "join_date": "2024-07-29", "url": "https://shopee.vn/hitachivietnam.store"}, {"username": "karofi_online_store", "shopid": 525199519, "name": "Karofi Official Store", "type": "Brand Shop", "brand": "Karofi", "badge": "Shopee Mall", "followers": 28502, "item_count": 136, "rating": 4.79, "total_ratings": 2250, "rating_good": 2141, "rating_normal": 45, "rating_bad": 64, "response_rate": "98%", "city": "Thành phố Hà Nội", "join_date": "2021-08-31", "url": "https://shopee.vn/karofi_online_store"}, {"username": "daikin_official_store", "shopid": 321812796, "name": "DAIKIN OFFICIAL STORE", "type": "Brand Shop", "brand": "Daikin", "badge": "Shopee Mall", "followers": 27275, "item_count": 56, "rating": 4.85, "total_ratings": 2231, "rating_good": 2148, "rating_normal": 37, "rating_bad": 46, "response_rate": "88%", "city": "Thành phố Hồ Chí Minh", "join_date": "2020-10-12", "url": "https://shopee.vn/daikin_official_store"}, {"username": "toshiba.tv", "shopid": 1834592761, "name": "TOSHIBA TV OFFICIAL", "type": "Brand Shop", "brand": "Toshiba", "badge": "Shopee Mall", "followers": 24404, "item_count": 16, "rating": 5.0, "total_ratings": 18, "rating_good": 18, "rating_normal": 0, "rating_bad": 0, "response_rate": "100%", "city": "Thành phố Hồ Chí Minh", "join_date": "2026-05-21", "url": "https://shopee.vn/toshiba.tv"}, {"username": "phongvu.premium", "shopid": 1256164758, "name": "PHONG VU PREMIUM STORE", "type": "Điện máy tổng hợp", "brand": "Phong Vũ", "badge": "Shopee Mall", "followers": 20207, "item_count": 2082, "rating": 4.91, "total_ratings": 15218, "rating_good": 14923, "rating_normal": 159, "rating_bad": 136, "response_rate": "97%", "city": "Thành phố Hồ Chí Minh", "join_date": "2024-05-13", "url": "https://shopee.vn/phongvu.premium"}, {"username": "lg_electronics_store", "shopid": 1118791034, "name": "LG Electronics Store", "type": "Brand Shop", "brand": "LG", "badge": "Shopee Mall", "followers": 19553, "item_count": 74, "rating": 4.81, "total_ratings": 1593, "rating_good": 1518, "rating_normal": 37, "rating_bad": 38, "response_rate": "98%", "city": "Tỉnh Hưng Yên", "join_date": "2023-11-15", "url": "https://shopee.vn/lg_electronics_store"}, {"username": "sharp_electronics_store", "shopid": 1248619934, "name": "SHARP Electronics Store", "type": "Brand Shop", "brand": "Sharp", "badge": "Shopee Mall", "followers": 14356, "item_count": 95, "rating": 4.83, "total_ratings": 1540, "rating_good": 1475, "rating_normal": 33, "rating_bad": 32, "response_rate": "95%", "city": "Tỉnh Hưng Yên", "join_date": "2024-05-03", "url": "https://shopee.vn/sharp_electronics_store"}, {"username": "lg.vietnam2024", "shopid": 1365539567, "name": "LG Brand Store by Giga", "type": "Brand Shop", "brand": "LG", "badge": "Shopee Mall", "followers": 12869, "item_count": 84, "rating": 4.91, "total_ratings": 3133, "rating_good": 3070, "rating_normal": 36, "rating_bad": 27, "response_rate": "100%", "city": "Hà Nội", "join_date": "2024-09-23", "url": "https://shopee.vn/lg.vietnam2024"}, {"username": "midea_official_store", "shopid": 161734784, "name": "Midea Viet Nam", "type": "Brand Shop", "brand": "Midea", "badge": "Thường", "followers": 12678, "item_count": 64, "rating": 4.84, "total_ratings": 627, "rating_good": 606, "rating_normal": 10, "rating_bad": 11, "response_rate": "N/A", "city": "Thành phố Hồ Chí Minh", "join_date": "2019-07-10", "url": "https://shopee.vn/midea_official_store"}, {"username": "shophanggiatot.vn", "shopid": 38448846, "name": "Sony Cường Phan", "type": "Điện máy tổng hợp", "brand": "Sony Cường Phan", "badge": "Thường", "followers": 6433, "item_count": 163, "rating": 4.93, "total_ratings": 4332, "rating_good": 4273, "rating_normal": 44, "rating_bad": 15, "response_rate": "96%", "city": "Thành phố Hồ Chí Minh", "join_date": "2017-10-12", "url": "https://shopee.vn/shophanggiatot.vn"}, {"username": "dienmaycholon3", "shopid": 282216677, "name": "Điện Máy 0nline", "type": "Điện máy tổng hợp", "brand": "Điện Máy Chợ Lớn", "badge": "Thường", "followers": 2155, "item_count": 61, "rating": 4.74, "total_ratings": 2231, "rating_good": 2076, "rating_normal": 83, "rating_bad": 72, "response_rate": "65%", "city": "TP. Hồ Chí Minh", "join_date": "2020-07-06", "url": "https://shopee.vn/dienmaycholon3"}, {"username": "dienmaymediamart", "shopid": 1712821893, "name": "Điện Máy Mediamart Việt Nam", "type": "Điện máy tổng hợp", "brand": "MediaMart", "badge": "Shopee Mall", "followers": 1309, "item_count": 1014, "rating": 4.82, "total_ratings": 556, "rating_good": 532, "rating_normal": 9, "rating_bad": 15, "response_rate": "98%", "city": "Bắc Ninh", "join_date": "2025-12-29", "url": "https://shopee.vn/dienmaymediamart"}, {"username": "dienmaycholon4", "shopid": 403571603, "name": "Điện Máy Toàn Quốc Online", "type": "Điện máy tổng hợp", "brand": "Điện Máy Chợ Lớn", "badge": "Thường", "followers": 1180, "item_count": 25, "rating": 4.67, "total_ratings": 396, "rating_good": 366, "rating_normal": 15, "rating_bad": 15, "response_rate": "69%", "city": "TP. Hồ Chí Minh", "join_date": "2021-03-15", "url": "https://shopee.vn/dienmaycholon4"}, {"username": "dienmaycholonvn", "shopid": 1082928258, "name": "ĐIỆN MÁY CHỢ LỚN VN1", "type": "Điện máy tổng hợp", "brand": "Điện Máy Chợ Lớn", "badge": "Thường", "followers": 349, "item_count": 3861, "rating": 4.78, "total_ratings": 327, "rating_good": 309, "rating_normal": 8, "rating_bad": 10, "response_rate": "87%", "city": "TP. Hồ Chí Minh", "join_date": "2023-09-28", "url": "https://shopee.vn/dienmaycholonvn"}, {"username": "daikin_authorize_store", "shopid": 312624482, "name": "Daikin Authorize By Kim Long", "type": "Brand Shop", "brand": "Daikin", "badge": "Thường", "followers": 145, "item_count": 7, "rating": 4.92, "total_ratings": 94, "rating_good": 92, "rating_normal": 1, "rating_bad": 1, "response_rate": "N/A", "city": "Thành phố Hồ Chí Minh", "join_date": "2020-09-21", "url": "https://shopee.vn/daikin_authorize_store"}, {"username": "bepxanhfamily", "shopid": null, "name": "Bếp Xanh Family", "type": "Chưa phân loại", "brand": "", "badge": "Thường", "followers": 0, "item_count": 0, "rating": 0.0, "total_ratings": 0, "rating_good": 0, "rating_normal": 0, "rating_bad": 0, "response_rate": "N/A", "city": "Toàn quốc", "join_date": "", "url": "https://shopee.vn/bepxanhfamily"}];
+    const PRODS_DATA = [{"shop": "sunhouse.official", "name": "Chảo chống dính KHÔNG TỪ Sunhouse CT Plus - Đường kính: 18-20-22-24-26-28-30cm - KHÔNG DÙNG ĐƯỢC TRÊN BẾP TỪ", "category": "1. Đồ gia dụng > Chảo chống dính", "model": "CHƯA_RÕ_MODEL", "price": 130000, "original_price": 205000, "discount_rate": 37, "historical_sold": 100000, "sold_monthly": 30000, "rating": 4.84, "url": "https://shopee.vn/product/18183995/11296445502"}, {"shop": "sunhouse.official", "name": "[Mã độc quyền online] Chảo inox 304 đa lớp Sunhouse IN20-24-26M7E - 3 lớp inox liền khối - Dùng mọi loại bếp", "category": "1. Đồ gia dụng > Chảo inox", "model": "26M7E", "price": 315000, "original_price": 420000, "discount_rate": 25, "historical_sold": 80000, "sold_monthly": 30000, "rating": 4.83, "url": "https://shopee.vn/product/18183995/25069914304"}, {"shop": "sunhouse.official", "name": "[NEW] Chảo chống dính siêu bền KHÔNG TỪ Sunhouse SBD20-24-26-28-30B - Chống dính 2 lớp - Vân đá truyền nhiệt", "category": "1. Đồ gia dụng > Chảo chống dính", "model": "SBD20", "price": 255000, "original_price": 410000, "discount_rate": 38, "historical_sold": 70000, "sold_monthly": 20000, "rating": 4.92, "url": "https://shopee.vn/product/18183995/1584311872"}, {"shop": "sunhouse.official", "name": "Bếp đơn hồng ngoại Sunhouse SHD6011 - Công suất 2000W - Phím bấm điện tử - 5 chế độ nấu - Bảo hành 12 tháng", "category": "4. Thiết bị điện gia dụng > Bếp điện đơn - đôi", "model": "SHD6011", "price": 830000, "original_price": 890000, "discount_rate": 7, "historical_sold": 40000, "sold_monthly": 1000, "rating": 4.91, "url": "https://shopee.vn/product/18183995/388704509"}, {"shop": "sunhouse.official", "name": "Ấm siêu tốc Inox 1.8L SUNHOUSE Happy Time HTD1021 - Hàng chính hãng - Bảo hành 12 tháng", "category": "4. Thiết bị điện gia dụng > Ấm siêu tốc", "model": "HTD1021", "price": 200000, "original_price": 220000, "discount_rate": 9, "historical_sold": 40000, "sold_monthly": 8000, "rating": 4.88, "url": "https://shopee.vn/product/18183995/388704558"}, {"shop": "sunhouse.official", "name": "[Live] Chảo inox 304 đa lớp Sunhouse IN20-24-26M7E - 3 lớp inox liền khối - Dùng được mọi loại bếp", "category": "Sản phẩm khác", "model": "26M7E", "price": 510000, "original_price": 510000, "discount_rate": 0, "historical_sold": 40000, "sold_monthly": 30000, "rating": 4.83, "url": "https://shopee.vn/product/18183995/28523166813"}, {"shop": "sunhouse.official", "name": "Chảo inox 304 đa lớp cao cấp SUNHOUSE INxxM15 - 3 lớp liền khối - Bắt từ nhạy bén - Phù hợp mọi loại bếp", "category": "1. Đồ gia dụng > Chảo inox", "model": "INxxM15", "price": 350000, "original_price": 630000, "discount_rate": 44, "historical_sold": 40000, "sold_monthly": 30000, "rating": 4.83, "url": "https://shopee.vn/product/18183995/28967252571"}, {"shop": "sunhouse.official", "name": "Chảo từ Sunhouse Magnetic Pan SHM - Đường kính 22-24-26-30 cm - Hàng chính hãng", "category": "Sản phẩm khác", "model": "CHƯA_RÕ_MODEL", "price": 170000, "original_price": 275000, "discount_rate": 38, "historical_sold": 30000, "sold_monthly": 650, "rating": 4.77, "url": "https://shopee.vn/product/18183995/388715806"}, {"shop": "sunhouse.official", "name": "Bàn là hơi SUNHOUSE SHD2063P màu tím -  5 chế độ là - Công suất 1600W - Bảo hành 12 tháng - Hàng chính hãng", "category": "4. Thiết bị điện gia dụng > Bàn là", "model": "SHD2063P", "price": 277000, "original_price": 290000, "discount_rate": 4, "historical_sold": 30000, "sold_monthly": 484, "rating": 4.78, "url": "https://shopee.vn/product/18183995/2337425481"}, {"shop": "sunhouse.official", "name": "Bếp từ đơn Sunhouse SHD6803 - Công suất 2000W - Bảo hành 12 tháng - 8 chế độ nấu - Nút bấm điện tử", "category": "4. Thiết bị điện gia dụng > Bếp điện đơn - đôi", "model": "SHD6803", "price": 1250000, "original_price": 1420000, "discount_rate": 12, "historical_sold": 30000, "sold_monthly": 4000, "rating": 4.85, "url": "https://shopee.vn/product/18183995/15712945760"}, {"shop": "sunhouse.official", "name": "Nồi cơm điện 1.8L Sunhouse SHD8611- Lòng nồi: 1mm, chống dính 2 lớp vân đá, 4-6 người dùng - Sản xuất tại Việt Nam", "category": "4. Thiết bị điện gia dụng > Nồi cơm điện - Nồi áp suất", "model": "SHD8611", "price": 790000, "original_price": 1100000, "discount_rate": 28, "historical_sold": 30000, "sold_monthly": 10000, "rating": 4.8, "url": "https://shopee.vn/product/18183995/24379423147"}, {"shop": "sunhouse.official", "name": "Ấm siêu tốc Inox 1.8L SUNHOUSE Happy Time HTD1081", "category": "4. Thiết bị điện gia dụng > Ấm siêu tốc", "model": "HTD1081", "price": 200000, "original_price": 220000, "discount_rate": 9, "historical_sold": 20000, "sold_monthly": 7000, "rating": 4.88, "url": "https://shopee.vn/product/18183995/384096810"}, {"shop": "sunhouse.official", "name": "Bộ nồi inox 5 đáy Sunhouse SH781 - gồm 3 nồi với đường kính 16cm-20cm-24cm - Đáy từ dùng mọi loại bếp - 5 lớp đáy", "category": "1. Đồ gia dụng > Nồi - Bộ nồi inox", "model": "SH781", "price": 880000, "original_price": 1132000, "discount_rate": 22, "historical_sold": 20000, "sold_monthly": 7000, "rating": 4.81, "url": "https://shopee.vn/product/18183995/388771523"}, {"shop": "sunhouse.official", "name": "[Mẫu mới] Ấm siêu tốc 1.8L Sunhouse SHD1351W - Bộ điều khiển cao cấp – Thân ấm 2 lớp chống bỏng – 1500W", "category": "NEW ARRIVAL- ĐÓN HÀNG MỚI, SẮM TIỆN NGHI", "model": "SHD1351W", "price": 360000, "original_price": 410000, "discount_rate": 12, "historical_sold": 20000, "sold_monthly": 7000, "rating": 4.84, "url": "https://shopee.vn/product/18183995/3990507435"}, {"shop": "sunhouse.official", "name": "Dao làm bếp đa năng Sunhouse KS-KN165KS - Chất liệu thép SUS420J2 không gỉ - Công nghệ mài đơn - Hàng chính hãng", "category": "3. Đồ dùng nhà bếp", "model": "SUS420J2", "price": 105000, "original_price": 140000, "discount_rate": 25, "historical_sold": 20000, "sold_monthly": 3000, "rating": 4.9, "url": "https://shopee.vn/product/18183995/6154716674"}, {"shop": "sunhouse.official", "name": "Bông Lau Nhà Microfiber Xoay 360 Độ SUNHOUSE KS-CO350M Đường Kính 360", "category": "6. Phụ kiện nhà cửa > Bộ lau nhà", "model": "CO350M", "price": 41000, "original_price": 45000, "discount_rate": 9, "historical_sold": 20000, "sold_monthly": 582, "rating": 4.89, "url": "https://shopee.vn/product/18183995/9348799399"}, {"shop": "kangaroo_shopping", "name": "Combo bộ 3 lõi lọc thô Kangaroo số 1,2,3 dùng cho máy RO", "category": "Xử lý đơn hàng bởi Shopee", "model": "CHƯA_RÕ_MODEL", "price": 139000, "original_price": 392000, "discount_rate": 65, "historical_sold": 20000, "sold_monthly": 1000, "rating": 4.88, "url": "https://shopee.vn/product/316170416/13022047121"}, {"shop": "philips_homeappliances", "name": "Bàn ủi khô PHILIPS HD1172 /01 1000W - Hàng chính hãng", "category": "Bàn ủi", "model": "HD1172", "price": 407000, "original_price": 439000, "discount_rate": 7, "historical_sold": 20000, "sold_monthly": 218, "rating": 4.91, "url": "https://shopee.vn/product/284593651/13515383844"}, {"shop": "philips_homeappliances", "name": "Bàn ủi hơi nước cầm tay Philips STH1000 /10|900W|nhỏ gọn ngăn chứa nước 85ml có thể tháo", "category": "Bàn ủi", "model": "10900Wnh", "price": 893000, "original_price": 1140000, "discount_rate": 22, "historical_sold": 20000, "sold_monthly": 97, "rating": 4.88, "url": "https://shopee.vn/product/284593651/20001343397"}, {"shop": "sunhouse.official", "name": "Máy xay thịt Sunhouse SHD5403 - Công suất 300W - Dung tích 1.8L - Đa chức năng - Bảo hành 12 tháng chính hãng", "category": "4. Thiết bị điện gia dụng > Máy làm sữa hạt - xay - vắt - ép", "model": "SHD5403", "price": 550000, "original_price": 650000, "discount_rate": 15, "historical_sold": 20000, "sold_monthly": 10000, "rating": 4.88, "url": "https://shopee.vn/product/18183995/22486276766"}, {"shop": "sunhouse.official", "name": "[Độc quyền Online] Chảo chống dính đáy từ Sunhouse ECO SHM20-24-26-28EC - Công nghệ Oil Lock chống cháy cục bộ", "category": "1. Đồ gia dụng > Chảo chống dính", "model": "SHM20", "price": 205000, "original_price": 395000, "discount_rate": 48, "historical_sold": 20000, "sold_monthly": 10000, "rating": 4.83, "url": "https://shopee.vn/product/18183995/24689301562"}, {"shop": "sunhouse.official", "name": "Chảo Inox Impact SUNHOUSE ECO IN20-24-26M5 - Đáy từ công nghệ mới Impact Bonding - Dùng được trên mọi loại bếp", "category": "1. Đồ gia dụng > Chảo inox", "model": "IN20", "price": 265000, "original_price": 300000, "discount_rate": 12, "historical_sold": 20000, "sold_monthly": 10000, "rating": 4.88, "url": "https://shopee.vn/product/18183995/27771977056"}, {"shop": "sunhouse.official", "name": "Nồi Quấy Bột Chống Dính SUNHOUSE SHG-MP14 - Đường kính 14 cm - KHÔNG DÙNG ĐƯỢC TRÊN BẾP TỪ", "category": "1. Đồ gia dụng > Nồi - Bộ nồi inox", "model": "MP14", "price": 190000, "original_price": 310000, "discount_rate": 39, "historical_sold": 10000, "sold_monthly": 3000, "rating": 4.85, "url": "https://shopee.vn/product/18183995/388704741"}, {"shop": "sunhouse.official", "name": "Bộ nồi inox 5 đáy Sunhouse Mama SH784: Gồm 3 nồi - Dùng mọi loại bếp - Đáy 5 lớp hạn chế cháy khét - Hàng chính hãng", "category": "1. Đồ gia dụng > Nồi - Bộ nồi inox", "model": "SH784", "price": 1230000, "original_price": 1990000, "discount_rate": 38, "historical_sold": 10000, "sold_monthly": 6000, "rating": 4.76, "url": "https://shopee.vn/product/18183995/732386394"}, {"shop": "sunhouse.official", "name": "Bộ nồi inox 3 đáy Sunhouse Eco SHG334E - Gồm 3 nồi 16-20-24cm - Inox an toàn, chất lượng - Dùng cho mọi loại bếp", "category": "1. Đồ gia dụng > Nồi - Bộ nồi inox", "model": "SHG334E", "price": 715000, "original_price": 945000, "discount_rate": 24, "historical_sold": 10000, "sold_monthly": 4000, "rating": 4.77, "url": "https://shopee.vn/product/18183995/1268818335"}, {"shop": "tefal_vn_official", "name": "Nồi cơm điện tử Tefal RK733168 - 1.8L, 750W", "category": "SẢN PHẨM ĐỘC QUYỀN ONLINE", "model": "RK733168", "price": 1048000, "original_price": 1699000, "discount_rate": 38, "historical_sold": 10000, "sold_monthly": 387, "rating": 4.85, "url": "https://shopee.vn/product/254657873/3465928321"}, {"shop": "philips_homeappliances", "name": "Máy xay sinh tố PHILIPS HR2223 /00 700W full phụ kiện cối nhựa - Hàng Chính Hãng", "category": "Máy xay-máy ép", "model": "HR2223", "price": 1768000, "original_price": 1910000, "discount_rate": 7, "historical_sold": 10000, "sold_monthly": 81, "rating": 4.79, "url": "https://shopee.vn/product/284593651/4742347732"}, {"shop": "bluestone_vietnam", "name": "Máy Đánh Trứng BlueStone HMB-6333S 300W | 6 Tốc Độ | Trộn Bột – Làm Kem – Đánh Trứng | Chính Hãng BH 2 Năm", "category": "TOP DEAL BÁN CHẠY", "model": "6333S", "price": 799000, "original_price": 1197000, "discount_rate": 33, "historical_sold": 10000, "sold_monthly": 2000, "rating": 4.92, "url": "https://shopee.vn/product/189615586/5302398171"}, {"shop": "panasonic_official", "name": "Máy Tăm Nước Cầm Tay Panasonic Công Nghệ Siêu Âm EW1511 - Làm Sạch Răng Nướu", "category": "TĂM NƯỚC", "model": "EW1511", "price": 2559000, "original_price": 2850000, "discount_rate": 10, "historical_sold": 10000, "sold_monthly": 1000, "rating": 4.9, "url": "https://shopee.vn/product/189431669/6011857262"}, {"shop": "panasonic_official", "name": "Vỉ 5 viên Pin nút Panasonic CR-2032VN/5B – Hàng Chính Hãng", "category": "PIN > Pin", "model": "2032VN", "price": 89000, "original_price": 129000, "discount_rate": 31, "historical_sold": 10000, "sold_monthly": 10000, "rating": 4.95, "url": "https://shopee.vn/product/189431669/6811878512"}, {"shop": "sunhouse.official", "name": "Bộ dao 2 chiếc Eco Family SUNHOUSE KS-KN2E1", "category": "3. Đồ dùng nhà bếp", "model": "KN2E1", "price": 160000, "original_price": 200000, "discount_rate": 20, "historical_sold": 10000, "sold_monthly": 392, "rating": 4.9, "url": "https://shopee.vn/product/18183995/8585552347"}, {"shop": "philips_homeappliances", "name": "Máy xay sinh tố PHILIPS HR2041 /10 | 450W |xay nhuyễn trong 45s - Hàng Chính Hãng", "category": "Máy xay-máy ép", "model": "HR2041", "price": 775000, "original_price": 840000, "discount_rate": 8, "historical_sold": 10000, "sold_monthly": 124, "rating": 4.81, "url": "https://shopee.vn/product/284593651/8996344283"}, {"shop": "tefal_vn_official", "name": "Dao Tefal Comfort 9cm", "category": "DAO", "model": "CHƯA_RÕ_MODEL", "price": 194000, "original_price": 299000, "discount_rate": 35, "historical_sold": 10000, "sold_monthly": 9000, "rating": 4.97, "url": "https://shopee.vn/product/254657873/9353304903"}, {"shop": "sunhouse.official", "name": "Bình giữ nhiệt Inox 304 SUNHOUSE 450ml KS-TU450I", "category": "2. Bình giữ nhiệt", "model": "TU450I", "price": 150000, "original_price": 200000, "discount_rate": 25, "historical_sold": 10000, "sold_monthly": 2000, "rating": 4.84, "url": "https://shopee.vn/product/18183995/9678267198"}, {"shop": "bluestone_vietnam", "name": "Máy Sấy Tóc BlueStone HDB-1827 | 1100W – Nhỏ Gọn – 3 Chế Độ Sấy – Bảo Vệ Tóc – Bảo Hành 2 Năm", "category": "Máy tạo kiểu - Máy sấy tóc", "model": "1100W", "price": 375000, "original_price": 577000, "discount_rate": 35, "historical_sold": 10000, "sold_monthly": 2000, "rating": 4.94, "url": "https://shopee.vn/product/189615586/11255961283"}, {"shop": "panasonic_official", "name": "Máy Sấy Tóc Ionity Panasonic EH-NE66-K645 - Tay Cầm Gấp Tiện Lợi - BH 12 Tháng", "category": "SẢN PHẨM LÀM ĐẸP > Độc quyền Online", "model": "NE66", "price": 929000, "original_price": 1010000, "discount_rate": 8, "historical_sold": 10000, "sold_monthly": 557, "rating": 4.93, "url": "https://shopee.vn/product/189431669/13322798019"}, {"shop": "sunhouse.official", "name": "Bộ lau nhà xoay 360 độ Sunhouse KS-CL330S - Kèm thùng tự vắt có lồng inox chống gỉ, dễ làm sạch - Hàng chính hãng", "category": "6. Phụ kiện nhà cửa > Bộ lau nhà", "model": "CL330S", "price": 300000, "original_price": 485000, "discount_rate": 38, "historical_sold": 10000, "sold_monthly": 1000, "rating": 4.82, "url": "https://shopee.vn/product/18183995/13538403774"}, {"shop": "sunhouse.official", "name": "Thớt tre tự nhiên SUNHOUSE KS-CH3522B", "category": "Sản phẩm khác", "model": "CH3522B", "price": 130000, "original_price": 170000, "discount_rate": 24, "historical_sold": 10000, "sold_monthly": 4000, "rating": 4.91, "url": "https://shopee.vn/product/18183995/14380533810"}, {"shop": "sunhouse.official", "name": "Nồi chiên không dầu 6,5L Sunhouse SHD4030 - Công nghệ Rapid Air 360 độ - Cửa sổ khoang chiên trong suốt", "category": "4. Thiết bị điện gia dụng > Nồi chiên không dầu", "model": "SHD4030", "price": 1525000, "original_price": 1990000, "discount_rate": 23, "historical_sold": 10000, "sold_monthly": 227, "rating": 4.9, "url": "https://shopee.vn/product/18183995/15041659009"}, {"shop": "sunhouse.official", "name": "Thớt tre tự nhiên SUNHOUSE KS-CH3020B", "category": "3. Đồ dùng nhà bếp", "model": "CH3020B", "price": 140000, "original_price": 165000, "discount_rate": 15, "historical_sold": 10000, "sold_monthly": 4000, "rating": 4.87, "url": "https://shopee.vn/product/18183995/16042073607"}, {"shop": "sunhouse.official", "name": "Nồi Inox 3 đáy Sunhouse SHG301 - 16/20/24/28cm - Dùng cho mọi loại bếp - Đáy 3 lớp - Hàng chính hãng", "category": "1. Đồ gia dụng > Nồi - Bộ nồi inox", "model": "SHG301", "price": 255000, "original_price": 410000, "discount_rate": 38, "historical_sold": 10000, "sold_monthly": 2000, "rating": 4.87, "url": "https://shopee.vn/product/18183995/18486164054"}, {"shop": "sunhouse.official", "name": "[Độc quyền] Nồi chiên không dầu 6.5L SUNHOUSE SHD4032 - Công nghệ Rapid Air giảm tới 80% dầu - Khoang chiên trong suốt", "category": "NEW ARRIVAL- ĐÓN HÀNG MỚI, SẮM TIỆN NGHI", "model": "SHD4032", "price": 1549350, "original_price": 2190000, "discount_rate": 29, "historical_sold": 10000, "sold_monthly": 6000, "rating": 4.87, "url": "https://shopee.vn/product/18183995/19224198363"}, {"shop": "sunhouse.official", "name": "Máy ép chậm Sunhouse SHD5515 - Dung tích 600ml - Làm được kem, lưỡi cắt vượt trội - Ống tiếp nguyên liệu lớn 108mm", "category": "4. Thiết bị điện gia dụng > Máy làm sữa hạt - xay - vắt - ép", "model": "SHD5515", "price": 1775000, "original_price": 1910000, "discount_rate": 7, "historical_sold": 10000, "sold_monthly": 121, "rating": 4.85, "url": "https://shopee.vn/product/18183995/19290087532"}, {"shop": "kangaroo_shopping", "name": "Lõi số 1 extra Kangaroo PP-5 micro K28", "category": "Xử lý đơn hàng bởi Shopee", "model": "CHƯA_RÕ_MODEL", "price": 35000, "original_price": 98000, "discount_rate": 64, "historical_sold": 10000, "sold_monthly": 695, "rating": 4.9, "url": "https://shopee.vn/product/316170416/20239694533"}, {"shop": "electroluxofficialstore", "name": "Lò vi sóng để bàn tích hợp nướng đối lưu Electrolux 23L UltimateTaste 300-EMG23K22B", "category": "Lò vi sóng/ Lò nướng", "model": "EMG23K22B", "price": 1990000, "original_price": 2641091, "discount_rate": 25, "historical_sold": 10000, "sold_monthly": 8000, "rating": 4.91, "url": "https://shopee.vn/product/928724640/22125919456"}, {"shop": "electroluxofficialstore", "name": "Lò vi sóng 23L Electrolux EMM23K22B 800w - 5 chương trình nấu, rã đông, hâm nóng nhanh", "category": "Lò vi sóng/ Lò nướng", "model": "EMM23K22B", "price": 1770000, "original_price": 2444727, "discount_rate": 28, "historical_sold": 10000, "sold_monthly": 457, "rating": 4.84, "url": "https://shopee.vn/product/928724640/22716812472"}, {"shop": "electroluxofficialstore", "name": "Lò vi sóng 20L Electrolux EMM20K22W 800w - 5 chương trình nấu, rã đông, hâm nóng nhanh", "category": "Lò vi sóng/ Lò nướng", "model": "EMM20K22W", "price": 1600000, "original_price": 1953818, "discount_rate": 18, "historical_sold": 10000, "sold_monthly": 145, "rating": 4.85, "url": "https://shopee.vn/product/928724640/22916815335"}, {"shop": "sunhouse.official", "name": "Máy xay sinh tố đa năng Sunhouse SHD5114 - Công suất 450W - Lưỡi dao Inox sắc bén - 3 chức năng - Hàng chính hãng", "category": "4. Thiết bị điện gia dụng > Máy làm sữa hạt - xay - vắt - ép", "model": "SHD5114", "price": 685000, "original_price": 800000, "discount_rate": 14, "historical_sold": 10000, "sold_monthly": 2000, "rating": 4.87, "url": "https://shopee.vn/product/18183995/23859719080"}, {"shop": "sunhouse.official", "name": "Bình giữ nhiệt Flexi Sunhouse 920 ml Sunhouse KS-TU920 -Inox 304 - Giữ nóng & lạnh tới 6h - Quai xách mềm tiện lợi", "category": "2. Bình giữ nhiệt", "model": "TU920", "price": 225000, "original_price": 240000, "discount_rate": 6, "historical_sold": 10000, "sold_monthly": 1000, "rating": 4.85, "url": "https://shopee.vn/product/18183995/23962263215"}, {"shop": "sunhouse.official", "name": "Bình giữ nhiệt Flexi 750 ml Sunhouse KS-TU750 - Inox 304 - Giữ nóng & lạnh tới 6h - Quai xách mềm tiện lợi", "category": "2. Bình giữ nhiệt", "model": "TU750", "price": 215000, "original_price": 420000, "discount_rate": 49, "historical_sold": 10000, "sold_monthly": 3000, "rating": 4.84, "url": "https://shopee.vn/product/18183995/24302762759"}, {"shop": "tefal_vn_official", "name": "Chảo đúc cao cấp Tefal Robusto có miệng rót", "category": "Sản phẩm khác", "model": "CHƯA_RÕ_MODEL", "price": 769000, "original_price": 1149000, "discount_rate": 33, "historical_sold": 10000, "sold_monthly": 969, "rating": 4.88, "url": "https://shopee.vn/product/254657873/24316592377"}, {"shop": "tefal_vn_official", "name": "Chảo Inox cao cấp Professional Tefal 20cm/24cm/26cm/28cm", "category": "SẢN PHẨM ĐỘC QUYỀN ONLINE", "model": "CHƯA_RÕ_MODEL", "price": 288000, "original_price": 479000, "discount_rate": 40, "historical_sold": 10000, "sold_monthly": 180, "rating": 4.77, "url": "https://shopee.vn/product/254657873/24320738286"}, {"shop": "kangaroo_shopping", "name": "[ĐỘC QUYỀN] Bếp điện từ đơn Kangaroo KGIC20S3ME (tặng kèm nồi) - công suất 2000W", "category": "Xử lý đơn hàng bởi Shopee", "model": "KGIC20S3ME", "price": 850000, "original_price": 1450000, "discount_rate": 41, "historical_sold": 10000, "sold_monthly": 820, "rating": 4.86, "url": "https://shopee.vn/product/316170416/24641234771"}, {"shop": "sonystoreonline", "name": "Tai nghe bluetooth Sony WH-CH520 siêu nhẹ 147g đeo thoải mái, chỉnh EQ qua app, nhiều màu thời trang", "category": "TAI NGHE THỜI TRANG", "model": "CH520", "price": 1112500, "original_price": 1250000, "discount_rate": 11, "historical_sold": 10000, "sold_monthly": 1000, "rating": 4.91, "url": "https://shopee.vn/product/1152330179/25170740363"}, {"shop": "sunhouse.official", "name": "[Phiên bản mới] Máy xay thịt Sunhouse SHD5405 - Kèm lưỡi đánh bông ruốc, bóc tỏi  - 2 chế độ xay - Tự ngắt khi quá nhiệt", "category": "NEW ARRIVAL- ĐÓN HÀNG MỚI, SẮM TIỆN NGHI", "model": "SHD5405", "price": 587000, "original_price": 650000, "discount_rate": 10, "historical_sold": 10000, "sold_monthly": 3000, "rating": 4.87, "url": "https://shopee.vn/product/18183995/25540351564"}, {"shop": "kangaroo_shopping", "name": "[ĐỘC QUYỀN] Máy làm sữa hạt - sinh tố đa năng Kangaroo KGNM135B01", "category": "Xử lý đơn hàng bởi Shopee", "model": "KGNM135B01", "price": 1290000, "original_price": 1790000, "discount_rate": 28, "historical_sold": 10000, "sold_monthly": 2000, "rating": 4.86, "url": "https://shopee.vn/product/316170416/26468278384"}, {"shop": "kangaroo_shopping", "name": "Bình đun siêu tốc 1.8L Kangaroo KGWK18I3E / KGWK18I2- công suất 1500W", "category": "Xử lý đơn hàng bởi Shopee", "model": "KGWK18I3E", "price": 219000, "original_price": 329000, "discount_rate": 33, "historical_sold": 10000, "sold_monthly": 1000, "rating": 4.87, "url": "https://shopee.vn/product/316170416/26507129374"}, {"shop": "sunhouse.official", "name": "[Độc quyền Shopee] Bộ chảo quánh inox Baby Sunhouse SHG520-14 đáy từ - Đường kính 14cm - Phù hợp mọi loại bếp", "category": "1. Đồ gia dụng > Nồi - Bộ nồi inox", "model": "SHG520", "price": 350000, "original_price": 565000, "discount_rate": 38, "historical_sold": 10000, "sold_monthly": 440, "rating": 4.85, "url": "https://shopee.vn/product/18183995/26804767658"}, {"shop": "sunhouse.official", "name": "Nồi cơm điện 0.8L Sunhouse SHD8200 - Giữ ấm tới 8 tiếng - Chống dính 2 lớp Flead an toàn", "category": "4. Thiết bị điện gia dụng > Nồi cơm điện - Nồi áp suất", "model": "SHD8200", "price": 526000, "original_price": 760000, "discount_rate": 31, "historical_sold": 10000, "sold_monthly": 1000, "rating": 4.84, "url": "https://shopee.vn/product/18183995/27767255944"}, {"shop": "sunhouse.official", "name": "Ấm siêu tốc Inox 304 1.8L SUNHOUSE SHD1351/ SHD1351W - Thân ấm 2 lớp - Vỏ nhựa PP chống bỏng - Tự động tắt khi nước sôi", "category": "4. Thiết bị điện gia dụng > Ấm siêu tốc", "model": "SHD1351W", "price": 337000, "original_price": 400000, "discount_rate": 16, "historical_sold": 10000, "sold_monthly": 7000, "rating": 4.92, "url": "https://shopee.vn/product/18183995/29019990374"}, {"shop": "sunhouse.official", "name": "Chảo cạn inox 5 đáy Sunhouse IN20M4 - IN24M4 - IN26M4 - Đáy phẳng hoàn hảo từ công nghệ impact bonding,không phồng đáy", "category": "1. Đồ gia dụng > Chảo inox", "model": "IN20M4", "price": 300000, "original_price": 565000, "discount_rate": 47, "historical_sold": 10000, "sold_monthly": 8000, "rating": 4.84, "url": "https://shopee.vn/product/18183995/29162858326"}, {"shop": "kangaroo_shopping", "name": "Chảo inox đa lớp đáy chống dính tự thân Kangaroo KGFPSE các size 20-24-26-28cm - Inox 201", "category": "Xử lý đơn hàng bởi Shopee", "model": "CHƯA_RÕ_MODEL", "price": 219000, "original_price": 330000, "discount_rate": 34, "historical_sold": 10000, "sold_monthly": 838, "rating": 4.7, "url": "https://shopee.vn/product/316170416/41176894378"}, {"shop": "sunhouse.official", "name": "Chảo Inox 304 cao cấp Sunhouse Healthy IN16-20-24-26-28M9 - Phù hợp mọi loại bếp - Tay cầm Inox không gỉ", "category": "NEW ARRIVAL- ĐÓN HÀNG MỚI, SẮM TIỆN NGHI", "model": "IN16", "price": 210000, "original_price": 370000, "discount_rate": 43, "historical_sold": 10000, "sold_monthly": 1000, "rating": 4.83, "url": "https://shopee.vn/product/18183995/41364108406"}, {"shop": "sunhouse.official", "name": "Nồi Inox 5 đáy Sunhouse SHG788- 16/20/24 cm - Công nghệ Impact Bonding - Hiệu suất bắt từ 100% - Dùng mọi loại bếp", "category": "1. Đồ gia dụng > Nồi - Bộ nồi inox", "model": "SHG788", "price": 285000, "original_price": 510000, "discount_rate": 44, "historical_sold": 10000, "sold_monthly": 9000, "rating": 4.87, "url": "https://shopee.vn/product/18183995/42406977213"}, {"shop": "sunhouse.official", "name": "Máy Sấy Tóc SUNHOUSE SHD2305 - Công Suất 650W - 2 Tốc Độ Gió - 2 Mức Nhiệt - Hệ Thống Tản Nhiệt Tốt", "category": "5. Chăm sóc cá nhân > Máy sấy tóc", "model": "SHD2305", "price": 170000, "original_price": 175000, "discount_rate": 3, "historical_sold": 9000, "sold_monthly": 712, "rating": 4.88, "url": "https://shopee.vn/product/18183995/844436580"}, {"shop": "sunhouse.official", "name": "Vợt muỗi SHE-EECVM11, màu vàng  - 3 lớp lưới điện đan khít - 2 công tắc: gạt, bấm", "category": "6. Phụ kiện nhà cửa > Vợt muỗi", "model": "EECVM11", "price": 120000, "original_price": 124000, "discount_rate": 3, "historical_sold": 9000, "sold_monthly": 1000, "rating": 4.85, "url": "https://shopee.vn/product/18183995/982650872"}, {"shop": "tefal_vn_official", "name": "Nồi áp suất điện đa năng Tefal Home Chef CY601868", "category": "NỒI ÁP SUẤT", "model": "CY601868", "price": 2267000, "original_price": 3290000, "discount_rate": 31, "historical_sold": 9000, "sold_monthly": 993, "rating": 4.9, "url": "https://shopee.vn/product/254657873/8219438324"}, {"shop": "tefal_vn_official", "name": "Chảo chiên inox chống dính đáy từ Tefal Primary 26cm", "category": "CHẢO CHỐNG DÍNH CAO CẤP", "model": "CHƯA_RÕ_MODEL", "price": 395000, "original_price": 679000, "discount_rate": 42, "historical_sold": 9000, "sold_monthly": 5000, "rating": 4.88, "url": "https://shopee.vn/product/254657873/17205488186"}, {"shop": "tefal_vn_official", "name": "Nồi chảo chống dính đáy từ Tefal So Matcha chống dính an toàn", "category": "CHẢO CHỐNG DÍNH CAO CẤP", "model": "CHƯA_RÕ_MODEL", "price": 452000, "original_price": 499000, "discount_rate": 9, "historical_sold": 9000, "sold_monthly": 250, "rating": 4.86, "url": "https://shopee.vn/product/254657873/22278001595"}, {"shop": "electroluxofficialstore", "name": "Lò vi sóng để bàn Electrolux UltimateTaste 300 20L - EMM20K22B - 5 mức công suất", "category": "Lò vi sóng/ Lò nướng", "model": "EMM20K22B", "price": 1600000, "original_price": 1953818, "discount_rate": 18, "historical_sold": 9000, "sold_monthly": 509, "rating": 4.85, "url": "https://shopee.vn/product/928724640/22525888831"}, {"shop": "sunhouse.official", "name": "Nồi điện mini đa năng Sunhouse 1,6L (SHD4516) - 2L (SHD4517) - Đa năng 4in1 - Lòng nồi inox 304 - Tích hợp tay cầm", "category": "NEW ARRIVAL- ĐÓN HÀNG MỚI, SẮM TIỆN NGHI", "model": "CHƯA_RÕ_MODEL", "price": 500000, "original_price": 675000, "discount_rate": 26, "historical_sold": 9000, "sold_monthly": 2000, "rating": 4.87, "url": "https://shopee.vn/product/18183995/43857113603"}, {"shop": "sunhouse.official", "name": "Bàn ủi, bàn là khô SUNHOUSE SHD1072 - Thân nhựa chịu nhiệt - Đèn báo hoạt động - Bề mặt chống dính - Bảo hành 12 tháng", "category": "4. Thiết bị điện gia dụng > Bàn là", "model": "SHD1072", "price": 235000, "original_price": 250000, "discount_rate": 6, "historical_sold": 8000, "sold_monthly": 1000, "rating": 4.87, "url": "https://shopee.vn/product/18183995/3184154187"}, {"shop": "philips_homeappliances", "name": "Bình đun siêu tốc PHILIPS HD9303 /03 1.2L - Hàng Chính Hãng", "category": "Tất Cả Sản Phẩm", "model": "HD9303", "price": 610000, "original_price": 625000, "discount_rate": 2, "historical_sold": 8000, "sold_monthly": 5000, "rating": 4.94, "url": "https://shopee.vn/product/284593651/6358373547"}, {"shop": "sunhouse.official", "name": "Dao Thái SUNHOUSE KS-KN165SS Dài 29.2 cm", "category": "3. Đồ dùng nhà bếp", "model": "KN165SS", "price": 105000, "original_price": 140000, "discount_rate": 25, "historical_sold": 8000, "sold_monthly": 260, "rating": 4.9, "url": "https://shopee.vn/product/18183995/6754716781"}, {"shop": "bluestone_vietnam", "name": "Máy Xay Thịt BlueStone CHB-5145 | 2 Lít – 350W – 2 Lưỡi Dao Kép | Cối Thủy Tinh", "category": "TOP DEAL BÁN CHẠY", "model": "350W", "price": 789000, "original_price": 1299000, "discount_rate": 39, "historical_sold": 8000, "sold_monthly": 253, "rating": 4.86, "url": "https://shopee.vn/product/189615586/13484666506"}, {"shop": "tefal_vn_official", "name": "Chảo chiên inox chống dính đáy từ Tefal Primary 20cm", "category": "CHẢO CHỐNG DÍNH CAO CẤP", "model": "CHƯA_RÕ_MODEL", "price": 260000, "original_price": 479001, "discount_rate": 46, "historical_sold": 8000, "sold_monthly": 928, "rating": 4.89, "url": "https://shopee.vn/product/254657873/15753870705"}, {"shop": "tefal_vn_official", "name": "Chảo chiên inox chống dính đáy từ Tefal Primary 28cm", "category": "CHẢO CHỐNG DÍNH CAO CẤP", "model": "CHƯA_RÕ_MODEL", "price": 476000, "original_price": 699001, "discount_rate": 32, "historical_sold": 8000, "sold_monthly": 5000, "rating": 4.89, "url": "https://shopee.vn/product/254657873/16805489092"}, {"shop": "tefal_vn_official", "name": "Chảo xào inox chống dính đáy từ Tefal Primary 28cm", "category": "CHẢO CHỐNG DÍNH CAO CẤP", "model": "CHƯA_RÕ_MODEL", "price": 442000, "original_price": 719000, "discount_rate": 39, "historical_sold": 8000, "sold_monthly": 4000, "rating": 4.93, "url": "https://shopee.vn/product/254657873/17205490105"}, {"shop": "casper_officialstore", "name": "Tủ lạnh mini Casper một cửa 50L/ 95L RO-E50PG1/ RO-E95PGR (Có đóng tuyết) - Bảo hành 2 năm", "category": "Tủ lạnh", "model": "E50PG1", "price": 2445000, "original_price": 3990000, "discount_rate": 39, "historical_sold": 8000, "sold_monthly": 520, "rating": 4.74, "url": "https://shopee.vn/product/961746045/24493138577"}, {"shop": "sunhouse.official", "name": "Bộ chảo quánh chống dính KHÔNG TỪ Sunhouse Baby SHG14BB - 2 món kích thước 14cm, 2 Lớp chống dính an toàn", "category": "Sản phẩm khác", "model": "SHG14BB", "price": 285000, "original_price": 460000, "discount_rate": 38, "historical_sold": 8000, "sold_monthly": 3000, "rating": 4.73, "url": "https://shopee.vn/product/18183995/28154974564"}, {"shop": "sunhouse.official", "name": "Bếp từ đơn Sunhouse SHD6154 - Công suất 2000W - 8 chế độ nấu - 10 mức nhiệt - Chế độ hẹn giờ - Bảo hành 12 tháng", "category": "4. Thiết bị điện gia dụng > Bếp điện đơn - đôi", "model": "SHD6154", "price": 935000, "original_price": 1190000, "discount_rate": 21, "historical_sold": 8000, "sold_monthly": 748, "rating": 4.91, "url": "https://shopee.vn/product/18183995/29937031438"}, {"shop": "sunhouse.official", "name": "Nồi Inox 5 đáy Sunhouse SHG799-xx - Đáy 5 lớp bền bỉ - Inox cao cấp - Truyền nhiệt nhanh - Dùng mọi loại bếp", "category": "NEW ARRIVAL- ĐÓN HÀNG MỚI, SẮM TIỆN NGHI", "model": "SHG799", "price": 245000, "original_price": 395000, "discount_rate": 38, "historical_sold": 8000, "sold_monthly": 4000, "rating": 4.9, "url": "https://shopee.vn/product/18183995/41180115130"}, {"shop": "kangaroo_shopping", "name": "[QUÀ TẶNG KHÔNG BÁN] Combo 3 lõi - Bộ lõi lọc 123 extra Kangaroo số 123", "category": "Xử lý đơn hàng bởi Shopee", "model": "CHƯA_RÕ_MODEL", "price": 1000000, "original_price": 1000000, "discount_rate": 0, "historical_sold": 8000, "sold_monthly": 6000, "rating": 4.75, "url": "https://shopee.vn/product/316170416/42373451546"}, {"shop": "sunhouse.official", "name": "Chảo phủ sứ Nano đáy từ Sunhouse Healthy SHG20-24-26MP/T1 - Chống dính Nano Ceramic - Bắt từ nhanh - Màu sắc trendy", "category": "1. Đồ gia dụng > Nồi - Chảo phủ sứ ceramic", "model": "SHG20", "price": 265000, "original_price": 495000, "discount_rate": 46, "historical_sold": 8000, "sold_monthly": 943, "rating": 4.87, "url": "https://shopee.vn/product/18183995/43410222759"}, {"shop": "sunhouse.official", "name": "Quánh phủ sứ Nano đáy từ Sunhouse Healthy MP18P/18T - Chống dính Nano Ceramic - Tay cầm chống trơn - Bắt từ nhanh", "category": "NEW ARRIVAL- ĐÓN HÀNG MỚI, SẮM TIỆN NGHI", "model": "MP18P", "price": 375000, "original_price": 680000, "discount_rate": 45, "historical_sold": 8000, "sold_monthly": 6000, "rating": 4.89, "url": "https://shopee.vn/product/18183995/43559901006"}, {"shop": "kangaroo_shopping", "name": "[QUÀ TẶNG KHÔNG BÁN ] Chảo Inox 304 nguyên khối chống dính tự thân Kangaroo size 20cm - KGFP20D1NE", "category": "Xử lý đơn hàng bởi Shopee", "model": "KGFP20D1NE", "price": 1000000, "original_price": 1000000, "discount_rate": 0, "historical_sold": 8000, "sold_monthly": 7000, "rating": 4.72, "url": "https://shopee.vn/product/316170416/44601743888"}, {"shop": "tefal_vn_official", "name": "Máy làm sữa hạt, xay nấu đa năng Tefal - BL967B66 1300W", "category": "MÁY NẤU SỮA HẠT ĐA NĂNG", "model": "BL967B66", "price": 2541000, "original_price": 4000000, "discount_rate": 36, "historical_sold": 7000, "sold_monthly": 787, "rating": 4.88, "url": "https://shopee.vn/product/254657873/6255029904"}, {"shop": "kangaroo_shopping", "name": "[HÀNG QUÀ TẶNG] Combo bộ 3 lõi lọc 123 extra Kangaroo số 123", "category": "Xử lý đơn hàng bởi Shopee", "model": "CHƯA_RÕ_MODEL", "price": 1000000, "original_price": 1000000, "discount_rate": 0, "historical_sold": 7000, "sold_monthly": 6000, "rating": 4.74, "url": "https://shopee.vn/product/316170416/25894961005"}, {"shop": "kangaroo_shopping", "name": "[ĐỘC QUYỀN ONLINE] Bếp gas đôi dương kính 2 lò Kangaroo KGGS69G2E", "category": "Xử lý đơn hàng bởi Shopee", "model": "KGGS69G2E", "price": 750000, "original_price": 1143000, "discount_rate": 34, "historical_sold": 7000, "sold_monthly": 335, "rating": 4.86, "url": "https://shopee.vn/product/316170416/27069428048"}, {"shop": "sunhouse.official", "name": "Chảo siêu bền đá đáy từ Sunhouse Trendy SFP18-20-22-24P - Chống dính 4 lớp vân đá - Phù hợp với mọi loại bếp", "category": "1. Đồ gia dụng > Chảo chống dính", "model": "SFP18", "price": 225000, "original_price": 445000, "discount_rate": 49, "historical_sold": 7000, "sold_monthly": 722, "rating": 4.83, "url": "https://shopee.vn/product/18183995/27337143288"}, {"shop": "sunhouse.official", "name": "Bếp gas dương kính Sunhouse SHB204MT - Mặt kính cường lực - Đầu hâm công nghệ mới", "category": "7. Thiết bị nhà bếp > Bếp gas", "model": "SHB204MT", "price": 725000, "original_price": 1015000, "discount_rate": 29, "historical_sold": 7000, "sold_monthly": 5000, "rating": 4.84, "url": "https://shopee.vn/product/18183995/27357533873"}, {"shop": "sunhouse.official", "name": "Bình giữ nhiệt Refined 600ml Sunhouse KS-TU600RE - Inox 304 an toàn - Giữ nhiệt tới 8h - Đế silicon chống trượt", "category": "NEW ARRIVAL- ĐÓN HÀNG MỚI, SẮM TIỆN NGHI", "model": "TU600RE", "price": 250000, "original_price": 340000, "discount_rate": 26, "historical_sold": 7000, "sold_monthly": 4000, "rating": 4.85, "url": "https://shopee.vn/product/18183995/40761870275"}, {"shop": "sunhouse.official", "name": "Nồi phủ sứ Nano đáy từ Sunhouse Healthy SHG7979MP-20-24 - Chống dính Nano Ceramic - Dùng mọi loại bếp", "category": "NEW ARRIVAL- ĐÓN HÀNG MỚI, SẮM TIỆN NGHI", "model": "SHG7979MP", "price": 450000, "original_price": 850000, "discount_rate": 47, "historical_sold": 7000, "sold_monthly": 5000, "rating": 4.86, "url": "https://shopee.vn/product/18183995/41059900736"}, {"shop": "sunhouse.official", "name": "Nồi cơm điện SUNHOUSE 1.8L SHD8607W", "category": "4. Thiết bị điện gia dụng > Nồi cơm điện - Nồi áp suất", "model": "SHD8607W", "price": 969000, "original_price": 969000, "discount_rate": 0, "historical_sold": 6000, "sold_monthly": 5000, "rating": 4.76, "url": "https://shopee.vn/product/18183995/1824783571"}, {"shop": "panasonic_official", "name": "Vỉ 2 viên Pin sạc Panasonic Eneloop AA 2000mAh BK-3MCCE2BT6 – Hàng Chính Hãng", "category": "PIN > Pin", "model": "3MCCE2BT6", "price": 269000, "original_price": 319000, "discount_rate": 16, "historical_sold": 6000, "sold_monthly": 3000, "rating": 4.94, "url": "https://shopee.vn/product/189431669/4011881271"}, {"shop": "panasonic_official", "name": "Vỉ 4 viên Pin Panasonic Alkaline AA LR6T/4B-V – Hàng Chính Hãng", "category": "PIN > Pin", "model": "LR6T", "price": 69000, "original_price": 89000, "discount_rate": 22, "historical_sold": 6000, "sold_monthly": 384, "rating": 4.96, "url": "https://shopee.vn/product/189431669/4140192875"}, {"shop": "panasonic_official", "name": "Máy cạo râu Panasonic ES6850SB251 - Tặng kèm 2 viên Evolta AA - Hàng chính hãng", "category": "SẢN PHẨM LÀM ĐẸP > Máy cạo / tỉa", "model": "ES6850SB251", "price": 279000, "original_price": 329000, "discount_rate": 15, "historical_sold": 6000, "sold_monthly": 2000, "rating": 4.89, "url": "https://shopee.vn/product/189431669/4411886212"}, {"shop": "sunhouse.official", "name": "Máy lọc không khí Sunhouse SHD-15AP9715 diện tích sử dụng 20m2 | 3 lớp màng lọc sạch bụi bẩn", "category": "8. Máy lọc không khí", "model": "15AP9715", "price": 1460000, "original_price": 2480000, "discount_rate": 41, "historical_sold": 6000, "sold_monthly": 888, "rating": 4.83, "url": "https://shopee.vn/product/18183995/5974301553"}, {"shop": "philips_homeappliances", "name": "Bàn Ủi Hơi Nước cầm tay PHILIPS STH3010 /70 1000W- Hàng Chính Hãng", "category": "Bàn ủi", "model": "STH3010", "price": 1132000, "original_price": 1290000, "discount_rate": 12, "historical_sold": 6000, "sold_monthly": 49, "rating": 4.85, "url": "https://shopee.vn/product/284593651/7981146555"}, {"shop": "philips_homeappliances", "name": "Bàn Ủi Hơi Nước cầm tay PHILIPS STH3020 /10 |1000W| gập lại được - Hàng Chính Hãng", "category": "Bàn ủi", "model": "STH3020", "price": 1422000, "original_price": 1590000, "discount_rate": 11, "historical_sold": 6000, "sold_monthly": 61, "rating": 4.87, "url": "https://shopee.vn/product/284593651/10768180242"}, {"shop": "tefal_vn_official", "name": "Máy làm sữa hạt, xay nấu đa năng Tefal - BL83SD66 1400W - xay sinh tố", "category": "MÁY NẤU SỮA HẠT ĐA NĂNG", "model": "BL83SD66", "price": 3764000, "original_price": 6680000, "discount_rate": 44, "historical_sold": 6000, "sold_monthly": 907, "rating": 4.81, "url": "https://shopee.vn/product/254657873/14951593431"}, {"shop": "tefal_vn_official", "name": "Nồi/ quánh Inox đáy từ Tefal Duetto Plus cao cấp (16cm/18cm/20cm/22cm/24cm/28cm)", "category": "NỒI & CHẢO INOX CAO CẤP", "model": "CHƯA_RÕ_MODEL", "price": 754000, "original_price": 1299000, "discount_rate": 42, "historical_sold": 6000, "sold_monthly": 2000, "rating": 4.81, "url": "https://shopee.vn/product/254657873/22625308273"}, {"shop": "sonystoreonline", "name": "Tai nghe Bluetooth Sony WF-C510 pin 22h, kết nối đa điểm, chống nước IPX4, âm thanh 360 độ", "category": "TAI NGHE THỜI TRANG", "model": "C510", "price": 1112500, "original_price": 1290000, "discount_rate": 14, "historical_sold": 6000, "sold_monthly": 1000, "rating": 4.9, "url": "https://shopee.vn/product/1152330179/23863926757"}, {"shop": "sunhouse.official", "name": "[Cải tiến mới] Nồi chiên không dầu 5,5L Sunhouse SHD4013 - Công suất 1500W - Cửa sổ khoang chiên trong suốt", "category": "NEW ARRIVAL- ĐÓN HÀNG MỚI, SẮM TIỆN NGHI", "model": "SHD4013", "price": 1460000, "original_price": 2090000, "discount_rate": 30, "historical_sold": 6000, "sold_monthly": 857, "rating": 4.91, "url": "https://shopee.vn/product/18183995/24805625642"}, {"shop": "philips_homeappliances", "name": "Nồi Chiên Không Dầu Điện Tử Philips NA230/00 6.2 lít |1700W | Cửa Sổ Kính, - Hàng Chính Hãng", "category": "Nồi Chiên Không Dầu", "model": "NA230", "price": 2469000, "original_price": 2940000, "discount_rate": 16, "historical_sold": 6000, "sold_monthly": 91, "rating": 4.86, "url": "https://shopee.vn/product/284593651/26300440209"}, {"shop": "sunhouse.official", "name": "Chảo siêu bền đá sâu đáy từ Sunhouse Trendy SBDxxMA - Đáy từ phù hợp mọi loại bếp - Thân chảo dày lên tới 2,5mm", "category": "1. Đồ gia dụng > Chảo chống dính", "model": "CHƯA_RÕ_MODEL", "price": 335000, "original_price": 615000, "discount_rate": 46, "historical_sold": 6000, "sold_monthly": 665, "rating": 4.73, "url": "https://shopee.vn/product/18183995/26337133550"}, {"shop": "panasonic_official", "name": "Vỉ 1 viên Pin nút Panasonic CR-2032PT/1B – Hàng Chính Hãng", "category": "PIN > Pin", "model": "2032PT", "price": 39000, "original_price": 59000, "discount_rate": 34, "historical_sold": 6000, "sold_monthly": 5000, "rating": 5.0, "url": "https://shopee.vn/product/189431669/27375797930"}, {"shop": "sunhouse.official", "name": "Chảo inox 304 đa lớp cao cấp SUNHOUSE INxxM19 - 3 lớp liền khối - Cán nhựa Bakelite cách nhiệt hiệu quả", "category": "Sản phẩm khác", "model": "INxxM19", "price": 269000, "original_price": 460000, "discount_rate": 42, "historical_sold": 6000, "sold_monthly": 4000, "rating": 4.89, "url": "https://shopee.vn/product/18183995/29926015868"}, {"shop": "sunhouse.official", "name": "Nồi cơm điện mini SUNHOUSE 1.2L SHD8217W - Lòng nồi chống dính Whitford (USA) - Mâm nhiệt lớn, nấu chín nhanh", "category": "4. Thiết bị điện gia dụng > Nồi cơm điện - Nồi áp suất", "model": "SHD8217W", "price": 870000, "original_price": 870000, "discount_rate": 0, "historical_sold": 5000, "sold_monthly": 1000, "rating": 4.81, "url": "https://shopee.vn/product/18183995/1824756831"}, {"shop": "philips_homeappliances", "name": "Máy đánh trứng cầm tay PHILIPS HR3705/20 - Hàng Chính Hãng", "category": "Máy xay-máy ép", "model": "HR3705", "price": 795000, "original_price": 815000, "discount_rate": 2, "historical_sold": 5000, "sold_monthly": 147, "rating": 4.91, "url": "https://shopee.vn/product/284593651/4658375503"}, {"shop": "panasonic_official", "name": "Vỉ 4 viên Pin Panasonic Alkaline AAA LR03T/4B-V – Hàng Chính Hãng", "category": "PIN > Pin", "model": "LR03T", "price": 69000, "original_price": 89000, "discount_rate": 22, "historical_sold": 5000, "sold_monthly": 327, "rating": 4.94, "url": "https://shopee.vn/product/189431669/4740185095"}, {"shop": "panasonic_official", "name": "Vỉ 2 viên Pin Panasonic Evolta AA LR6EG/2B-V – Hàng Chính Hãng", "category": "PIN > Pin", "model": "LR6EG", "price": 59000, "original_price": 79000, "discount_rate": 25, "historical_sold": 5000, "sold_monthly": 3000, "rating": 4.94, "url": "https://shopee.vn/product/189431669/5440162423"}, {"shop": "sunhouse.official", "name": "Bộ lau nhà xoay 360 độ SUNHOUSE KS-CL350PO", "category": "6. Phụ kiện nhà cửa > Bộ lau nhà", "model": "CL350PO", "price": 375000, "original_price": 580000, "discount_rate": 35, "historical_sold": 5000, "sold_monthly": 1000, "rating": 4.77, "url": "https://shopee.vn/product/18183995/6237349307"}, {"shop": "panasonic_official", "name": "Máy sấy tóc Nanoe dưỡng ẩm, chăm sóc tóc và da đầu Panasonic EH-NA27PN645", "category": "SẢN PHẨM LÀM ĐẸP > Độc quyền Online", "model": "NA27PN645", "price": 1839000, "original_price": 1970000, "discount_rate": 7, "historical_sold": 5000, "sold_monthly": 46, "rating": 4.92, "url": "https://shopee.vn/product/189431669/6311727383"}, {"shop": "panasonic_official", "name": "Vỉ 2 viên Pin Panasonic Alkaline AA LR6T/2B-V – Hàng Chính Hãng", "category": "PIN > Pin", "model": "LR6T", "price": 39000, "original_price": 59000, "discount_rate": 34, "historical_sold": 5000, "sold_monthly": 4000, "rating": 4.93, "url": "https://shopee.vn/product/189431669/6411873009"}, {"shop": "philips_homeappliances", "name": "Máy Vắt Cam PHILIPS HR2738 0.5L 25W - Hàng Chính Hãng", "category": "Máy xay-máy ép", "model": "HR2738", "price": 899000, "original_price": 950000, "discount_rate": 5, "historical_sold": 5000, "sold_monthly": 19, "rating": 4.94, "url": "https://shopee.vn/product/284593651/6958371733"}, {"shop": "philips_homeappliances", "name": "Máy ép trái cây PHILIPS HR1811 - Hàng Chính Hãng", "category": "Máy xay-máy ép", "model": "HR1811", "price": 1319000, "original_price": 1420000, "discount_rate": 7, "historical_sold": 5000, "sold_monthly": 1000, "rating": 4.87, "url": "https://shopee.vn/product/284593651/7158371712"}, {"shop": "sunhouse.official", "name": "Dao chặt Eco Family SUNHOUSE KS-KN190EC", "category": "3. Đồ dùng nhà bếp", "model": "KN190EC", "price": 245000, "original_price": 265000, "discount_rate": 8, "historical_sold": 5000, "sold_monthly": 2000, "rating": 4.89, "url": "https://shopee.vn/product/18183995/8078275378"}, {"shop": "tefal_vn_official", "name": "Nồi cơm điện Tefal Easy Rice Compact RK730168 - 600W, 1L", "category": "NỒI CƠM ĐIỆN - NỒI CƠM CAO TẦN", "model": "RK730168", "price": 1091000, "original_price": 1499000, "discount_rate": 27, "historical_sold": 5000, "sold_monthly": 938, "rating": 4.8, "url": "https://shopee.vn/product/254657873/8469727652"}, {"shop": "sunhouse.official", "name": "Bộ dao 3 chiếc Eco Family Sunhouse KS-KN3E1 - Lưỡi dao làm từ thép SUS420J2 không gỉ - Gồm 3 dao: chặt, gọt và làm bếp", "category": "3. Đồ dùng nhà bếp", "model": "SUS420J2", "price": 315000, "original_price": 435000, "discount_rate": 28, "historical_sold": 5000, "sold_monthly": 594, "rating": 4.88, "url": "https://shopee.vn/product/18183995/9485541452"}];
+    const BRANDS_DATA = [{"brand": "Sunhouse", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["sunhouse.official"], "followers": 843923, "item_count": 423, "scraped_count": 345, "avg_rating": 4.85, "total_ratings": 344003, "primary_url": "https://shopee.vn/sunhouse.official", "best_name": "Chảo chống dính KHÔNG TỪ Sunhouse CT Plus - Đường kính: 18-20-22-24-26-28-30cm - KHÔNG DÙNG ĐƯỢC TRÊN BẾP TỪ", "best_model": "CHƯA_RÕ_MODEL", "best_price": 130000, "best_sold": 100000, "best_link": "https://shopee.vn/product/18183995/11296445502"}, {"brand": "Samsung", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["samsung_official_store"], "followers": 743219, "item_count": 1025, "scraped_count": 113, "avg_rating": 4.85, "total_ratings": 127993, "primary_url": "https://shopee.vn/samsung_official_store", "best_name": "Smart Tivi Samsung UHD U8500FKXXV 2025 - Miễn phí lắp đặt", "best_model": "U8500FKXXV", "best_price": 9960000, "best_sold": 3000, "best_link": "https://shopee.vn/product/65589552/43307957465"}, {"brand": "BlueStone", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["bluestone_vietnam"], "followers": 573734, "item_count": 215, "scraped_count": 135, "avg_rating": 4.88, "total_ratings": 60752, "primary_url": "https://shopee.vn/bluestone_vietnam", "best_name": "Máy Đánh Trứng BlueStone HMB-6333S 300W | 6 Tốc Độ | Trộn Bột – Làm Kem – Đánh Trứng | Chính Hãng BH 2 Năm", "best_model": "6333S", "best_price": 799000, "best_sold": 10000, "best_link": "https://shopee.vn/product/189615586/5302398171"}, {"brand": "ShopDunk", "type": "Điện máy tổng hợp", "badge": "Shopee Mall", "shop_count": 2, "shops": ["shopdunk_official_store", "shopdunkplus"], "followers": 548677, "item_count": 1963, "scraped_count": 0, "avg_rating": 4.93, "total_ratings": 53555, "primary_url": "https://shopee.vn/shopdunk_official_store", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "Kangaroo", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["kangaroo_shopping"], "followers": 454869, "item_count": 889, "scraped_count": 290, "avg_rating": 4.81, "total_ratings": 68536, "primary_url": "https://shopee.vn/kangaroo_shopping", "best_name": "Combo bộ 3 lõi lọc thô Kangaroo số 1,2,3 dùng cho máy RO", "best_model": "CHƯA_RÕ_MODEL", "best_price": 139000, "best_sold": 20000, "best_link": "https://shopee.vn/product/316170416/13022047121"}, {"brand": "Panasonic", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["panasonic_official"], "followers": 448278, "item_count": 345, "scraped_count": 189, "avg_rating": 4.9, "total_ratings": 47177, "primary_url": "https://shopee.vn/panasonic_official", "best_name": "Máy Tăm Nước Cầm Tay Panasonic Công Nghệ Siêu Âm EW1511 - Làm Sạch Răng Nướu", "best_model": "EW1511", "best_price": 2559000, "best_sold": 10000, "best_link": "https://shopee.vn/product/189431669/6011857262"}, {"brand": "Sharp", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 2, "shops": ["sharp_official_store", "sharp_electronics_store"], "followers": 441388, "item_count": 251, "scraped_count": 78, "avg_rating": 4.85, "total_ratings": 22117, "primary_url": "https://shopee.vn/sharp_official_store", "best_name": "Máy Vắt Cam Công Suất 25W Sharp EJ-J256-WH ( Màu Trắng)", "best_model": "J256", "best_price": 345000, "best_sold": 4000, "best_link": "https://shopee.vn/product/267127101/3360816488"}, {"brand": "LG", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 3, "shops": ["lgbrandshop", "lg_electronics_store", "lg.vietnam2024"], "followers": 407212, "item_count": 481, "scraped_count": 234, "avg_rating": 4.87, "total_ratings": 10940, "primary_url": "https://shopee.vn/lgbrandshop", "best_name": "[Chỉ giao miền Bắc] Máy giặt lồng ngang LG Inverter hơi nước 9kg màu trắng - FB1209S6W1", "best_model": "FB1209S6W1", "best_price": 8090000, "best_sold": 5000, "best_link": "https://shopee.vn/product/1340449161/29989584507"}, {"brand": "Sony", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 2, "shops": ["sonystoreonline", "sony_official_store"], "followers": 402079, "item_count": 345, "scraped_count": 61, "avg_rating": 4.86, "total_ratings": 30747, "primary_url": "https://shopee.vn/sonystoreonline", "best_name": "Tai nghe bluetooth Sony WH-CH520 siêu nhẹ 147g đeo thoải mái, chỉnh EQ qua app, nhiều màu thời trang", "best_model": "CH520", "best_price": 1112500, "best_sold": 10000, "best_link": "https://shopee.vn/product/1152330179/25170740363"}, {"brand": "Xiaomi", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["xiaomiofficialstore"], "followers": 372800, "item_count": 42, "scraped_count": 24, "avg_rating": 4.9, "total_ratings": 29489, "primary_url": "https://shopee.vn/xiaomiofficialstore", "best_name": "[Livestream] Điện thoại POCO X8 Pro 5G (8+256GB| 8+512GB| 12+512GB) | Màn 6.59\" 1,5K | D8500U", "best_model": "D8500U", "best_price": 11890000, "best_sold": 3000, "best_link": "https://shopee.vn/product/340431675/46256441980"}, {"brand": "Tefal", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["tefal_vn_official"], "followers": 341308, "item_count": 518, "scraped_count": 126, "avg_rating": 4.85, "total_ratings": 95339, "primary_url": "https://shopee.vn/tefal_vn_official", "best_name": "Nồi cơm điện tử Tefal RK733168 - 1.8L, 750W", "best_model": "RK733168", "best_price": 1048000, "best_sold": 10000, "best_link": "https://shopee.vn/product/254657873/3465928321"}, {"brand": "Philips", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["philips_homeappliances"], "followers": 291509, "item_count": 334, "scraped_count": 136, "avg_rating": 4.86, "total_ratings": 77295, "primary_url": "https://shopee.vn/philips_homeappliances", "best_name": "Bàn ủi khô PHILIPS HD1172 /01 1000W - Hàng chính hãng", "best_model": "HD1172", "best_price": 407000, "best_sold": 20000, "best_link": "https://shopee.vn/product/284593651/13515383844"}, {"brand": "Coocaa", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["coocaa_official_store"], "followers": 259936, "item_count": 30, "scraped_count": 0, "avg_rating": 4.85, "total_ratings": 18730, "primary_url": "https://shopee.vn/coocaa_official_store", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "Aqua", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["aqua_official_store"], "followers": 258423, "item_count": 233, "scraped_count": 188, "avg_rating": 4.82, "total_ratings": 9857, "primary_url": "https://shopee.vn/aqua_official_store", "best_name": "[SẢN PHẨM MỚI] Tủ lạnh mini Aqua 90 lít AQR-D100FA(PS) - Màu hồng nhạt - Freeship toàn quốc - Sẵn Hàng", "best_model": "D100FA", "best_price": 3575000, "best_sold": 5000, "best_link": "https://shopee.vn/product/800768321/27723335664"}, {"brand": "Toshiba", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 3, "shops": ["toshibapremiumstore", "toshiba_official_store", "toshiba.tv"], "followers": 133096, "item_count": 237, "scraped_count": 33, "avg_rating": 4.92, "total_ratings": 10273, "primary_url": "https://shopee.vn/toshibapremiumstore", "best_name": "Lõi lọc nước Toshiba  F-1643 - PP - C1 - C2 - Dùng cho máy lọc nước TWP-W1643SV(W)", "best_model": "W1643SV", "best_price": 160000, "best_sold": 5000, "best_link": "https://shopee.vn/product/437340083/12604836091"}, {"brand": "Pico", "type": "Điện máy tổng hợp", "badge": "Shopee Mall", "shop_count": 1, "shops": ["pico.vn"], "followers": 107941, "item_count": 903, "scraped_count": 0, "avg_rating": 4.9, "total_ratings": 19435, "primary_url": "https://shopee.vn/pico.vn", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "LG Authorized Store", "type": "Chưa phân loại", "badge": "Shopee Mall", "shop_count": 1, "shops": ["lg_shopdunk"], "followers": 105361, "item_count": 70, "scraped_count": 13, "avg_rating": 4.89, "total_ratings": 1244, "primary_url": "https://shopee.vn/lg_shopdunk", "best_name": "Máy lọc không khí LG PuriCare 360 Alpha Double AS10GDBY0.ABAE 72W", "best_model": "AS10GDBY0ABAE", "best_price": 21350000, "best_sold": 312, "best_link": "https://shopee.vn/product/1589711962/27690836820"}, {"brand": "Casper", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["casper_officialstore"], "followers": 105054, "item_count": 58, "scraped_count": 56, "avg_rating": 4.76, "total_ratings": 14158, "primary_url": "https://shopee.vn/casper_officialstore", "best_name": "Tủ lạnh mini Casper một cửa 50L/ 95L RO-E50PG1/ RO-E95PGR (Có đóng tuyết) - Bảo hành 2 năm", "best_model": "E50PG1", "best_price": 2445000, "best_sold": 8000, "best_link": "https://shopee.vn/product/961746045/24493138577"}, {"brand": "Giga Digital", "type": "Điện máy tổng hợp", "badge": "Yêu thích+", "shop_count": 1, "shops": ["gigadigital"], "followers": 103189, "item_count": 988, "scraped_count": 0, "avg_rating": 4.91, "total_ratings": 42223, "primary_url": "https://shopee.vn/gigadigital", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "Nguyễn Kim", "type": "Điện máy tổng hợp", "badge": "Shopee Mall", "shop_count": 1, "shops": ["nguyenkim.electronics"], "followers": 85290, "item_count": 4814, "scraped_count": 0, "avg_rating": 4.8, "total_ratings": 41693, "primary_url": "https://shopee.vn/nguyenkim.electronics", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "Electrolux", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["electroluxofficialstore"], "followers": 66696, "item_count": 143, "scraped_count": 138, "avg_rating": 4.85, "total_ratings": 22749, "primary_url": "https://shopee.vn/electroluxofficialstore", "best_name": "Lò vi sóng để bàn tích hợp nướng đối lưu Electrolux 23L UltimateTaste 300-EMG23K22B", "best_model": "EMG23K22B", "best_price": 1990000, "best_sold": 10000, "best_link": "https://shopee.vn/product/928724640/22125919456"}, {"brand": "TCL", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["tcl_flagship_store"], "followers": 44303, "item_count": 26, "scraped_count": 17, "avg_rating": 4.8, "total_ratings": 3590, "primary_url": "https://shopee.vn/tcl_flagship_store", "best_name": "【Giặt sấy】TCL CareAura giặt 10.5kg + sấy 7kg, động cơ DD cao cấp, kháng khuẩn ABS, Lắp 0đ HCM HN, TWD105-P122DG", "best_model": "TWD105", "best_price": 14990000, "best_sold": 1000, "best_link": "https://shopee.vn/product/492764796/40813680871"}, {"brand": "Điện Máy Gia Khang", "type": "Điện máy tổng hợp", "badge": "Shopee Mall", "shop_count": 1, "shops": ["dienmaygiakhang"], "followers": 43330, "item_count": 2693, "scraped_count": 0, "avg_rating": 4.88, "total_ratings": 18140, "primary_url": "https://shopee.vn/dienmaygiakhang", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "MediaMart", "type": "Điện máy tổng hợp", "badge": "Shopee Mall", "shop_count": 2, "shops": ["sieuthimediamart", "dienmaymediamart"], "followers": 42879, "item_count": 2406, "scraped_count": 0, "avg_rating": 4.8, "total_ratings": 6379, "primary_url": "https://shopee.vn/sieuthimediamart", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "Hisense", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["hisenseofficialstore"], "followers": 31268, "item_count": 35, "scraped_count": 25, "avg_rating": 4.77, "total_ratings": 593, "primary_url": "https://shopee.vn/hisenseofficialstore", "best_name": "Máy Giặt Hisense Cửa Trên 8kg WTZQ8012UT -  Tiết Kiệm | Sạch Sâu | Bộ Lọc Đôi - Bảo Hành 2 Năm", "best_model": "WTZQ8012UT", "best_price": 4290000, "best_sold": 611, "best_link": "https://shopee.vn/product/1023474854/25552208676"}, {"brand": "Gree", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["greevietnam"], "followers": 31267, "item_count": 29, "scraped_count": 22, "avg_rating": 4.96, "total_ratings": 56, "primary_url": "https://shopee.vn/greevietnam", "best_name": "[Lắp Đặt HCM_HN 0Đ] Máy lạnh/ Điều Hòa Gree Inverter 1.5HP BD12CI (Black Diamond) | Bảo Hành Chính Hãng", "best_model": "BD12CI", "best_price": 11500000, "best_sold": 49, "best_link": "https://shopee.vn/product/1764774160/57458936432"}, {"brand": "Hitachi", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["hitachivietnam.store"], "followers": 30021, "item_count": 55, "scraped_count": 0, "avg_rating": 4.81, "total_ratings": 1577, "primary_url": "https://shopee.vn/hitachivietnam.store", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "Karofi", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 1, "shops": ["karofi_online_store"], "followers": 28502, "item_count": 136, "scraped_count": 0, "avg_rating": 4.79, "total_ratings": 2250, "primary_url": "https://shopee.vn/karofi_online_store", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "Daikin", "type": "Brand Shop", "badge": "Shopee Mall", "shop_count": 2, "shops": ["daikin_official_store", "daikin_authorize_store"], "followers": 27420, "item_count": 63, "scraped_count": 39, "avg_rating": 4.88, "total_ratings": 2325, "primary_url": "https://shopee.vn/daikin_official_store", "best_name": "[LIVESTREAM] Máy Lọc không khí Daikin MC55UVM6-7 - Diện tích sử dụng 41m2", "best_model": "MC55UVM6", "best_price": 7100000, "best_sold": 790, "best_link": "https://shopee.vn/product/321812796/7857895873"}, {"brand": "Phong Vũ", "type": "Điện máy tổng hợp", "badge": "Shopee Mall", "shop_count": 1, "shops": ["phongvu.premium"], "followers": 20207, "item_count": 2082, "scraped_count": 0, "avg_rating": 4.91, "total_ratings": 15218, "primary_url": "https://shopee.vn/phongvu.premium", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "Midea", "type": "Brand Shop", "badge": "Thường", "shop_count": 1, "shops": ["midea_official_store"], "followers": 12678, "item_count": 64, "scraped_count": 0, "avg_rating": 4.84, "total_ratings": 627, "primary_url": "https://shopee.vn/midea_official_store", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "Sony Cường Phan", "type": "Điện máy tổng hợp", "badge": "Thường", "shop_count": 1, "shops": ["shophanggiatot.vn"], "followers": 6433, "item_count": 163, "scraped_count": 0, "avg_rating": 4.93, "total_ratings": 4332, "primary_url": "https://shopee.vn/shophanggiatot.vn", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "Điện Máy Chợ Lớn", "type": "Điện máy tổng hợp", "badge": "Thường", "shop_count": 3, "shops": ["dienmaycholon3", "dienmaycholon4", "dienmaycholonvn"], "followers": 3684, "item_count": 3947, "scraped_count": 0, "avg_rating": 4.73, "total_ratings": 2954, "primary_url": "https://shopee.vn/dienmaycholon3", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}, {"brand": "Bếp Xanh Family", "type": "Chưa phân loại", "badge": "Thường", "shop_count": 1, "shops": ["bepxanhfamily"], "followers": 0, "item_count": 0, "scraped_count": 0, "avg_rating": 5.0, "total_ratings": 0, "primary_url": "https://shopee.vn/bepxanhfamily", "best_name": "Chưa quét", "best_model": "", "best_price": 0, "best_sold": 0, "best_link": ""}];
+
+    let currentTypeFilter = 'all';
+    let searchQuery = '';
+    let sortColumn = 'followers';
+    let sortAsc = false;
+
+    let prodSearchQuery = '';
+    let brandSearchQuery = '';
+
+    // ================= AUTHENTICATION =================
+    const PASSCODE = 'GK-8888';
+
+    function checkAuth() {
+      const sessionAuth = sessionStorage.getItem('shopee_auth_key');
+      const localAuth = localStorage.getItem('shopee_auth_key');
+
+      if (sessionAuth === PASSCODE || localAuth === PASSCODE) {
+        unlockDashboard();
+      } else {
+        document.getElementById('authOverlay').style.display = 'flex';
+        document.getElementById('dashboardApp').classList.add('hidden');
+        setTimeout(() => {
+          document.getElementById('authPassword').focus();
+        }, 100);
+      }
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('authPassword').value.trim();
+      const remember = document.getElementById('rememberMe').checked;
+      const errorDiv = document.getElementById('authError');
+
+      if (input === PASSCODE) {
+        errorDiv.classList.add('hidden');
+        sessionStorage.setItem('shopee_auth_key', PASSCODE);
+        if (remember) {
+          localStorage.setItem('shopee_auth_key', PASSCODE);
+        }
+        unlockDashboard();
+      } else {
+        errorDiv.classList.remove('hidden');
+        const passBox = document.getElementById('authPassword');
+        passBox.classList.add('animate-shake', 'border-rose-500');
+        setTimeout(() => {
+          passBox.classList.remove('animate-shake');
+        }, 500);
+      }
+    }
+
+    function unlockDashboard() {
+      const overlay = document.getElementById('authOverlay');
+      overlay.style.opacity = '0';
+      overlay.style.pointerEvents = 'none';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+        document.getElementById('dashboardApp').classList.remove('hidden');
+        initCharts();
+      }, 250);
+    }
+
+    function lockDashboard() {
+      sessionStorage.removeItem('shopee_auth_key');
+      localStorage.removeItem('shopee_auth_key');
+      document.getElementById('authPassword').value = '';
+      const overlay = document.getElementById('authOverlay');
+      overlay.style.display = 'flex';
+      overlay.style.opacity = '1';
+      overlay.style.pointerEvents = 'auto';
+      document.getElementById('dashboardApp').classList.add('hidden');
+      setTimeout(() => {
+        document.getElementById('authPassword').focus();
+      }, 100);
+    }
+
+    function togglePassVisibility() {
+      const pass = document.getElementById('authPassword');
+      if (pass.type === 'password') {
+        pass.type = 'text';
+      } else {
+        pass.type = 'password';
+      }
+    }
+
+    // ================= TAB NAVIGATION =================
+    function switchTab(tabId) {
+      const tabs = ['shops', 'charts', 'products', 'brands'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-${t}-btn`);
+        const section = document.getElementById(`tab-${t}`);
+        if (t === tabId) {
+          section.classList.remove('hidden');
+          btn.className = 'px-4 py-2.5 text-xs font-semibold border-b-2 border-orange-500 text-orange-400 transition flex items-center gap-2 whitespace-nowrap';
+        } else {
+          section.classList.add('hidden');
+          btn.className = 'px-4 py-2.5 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap';
+        }
+      });
+
+      if (tabId === 'charts') {
+        setTimeout(initCharts, 50);
+      }
+    }
+
+    // ================= TABLE 1: SHOPS =================
+    function filterType(type) {
+      currentTypeFilter = type;
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.className = 'filter-btn px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+      });
+      const map = { 'all': 'filter-all', 'Brand Shop': 'filter-brand', 'Điện máy tổng hợp': 'filter-general', 'Shopee Mall': 'filter-mall' };
+      const activeBtn = document.getElementById(map[type]);
+      if (activeBtn) activeBtn.className = 'filter-btn active px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500 text-white transition';
+      renderTable();
+    }
+
+    function handleSearch() {
+      searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+      renderTable();
+    }
+
+    function sortTable(col) {
+      if (sortColumn === col) {
+        sortAsc = !sortAsc;
+      } else {
+        sortColumn = col;
+        sortAsc = false;
+      }
+      renderTable();
+    }
+
+    function renderTable() {
+      let list = SHOPS_DATA.filter(s => {
+        if (currentTypeFilter === 'Brand Shop' && s.type !== 'Brand Shop') return false;
+        if (currentTypeFilter === 'Điện máy tổng hợp' && s.type === 'Brand Shop') return false;
+        if (currentTypeFilter === 'Shopee Mall' && !s.badge.includes('Mall')) return false;
+        if (searchQuery) {
+          const target = (s.name + ' ' + s.username + ' ' + s.brand + ' ' + s.city).toLowerCase();
+          if (!target.includes(searchQuery)) return false;
+        }
+        return true;
+      });
+
+      list.sort((a, b) => {
+        let vA = a[sortColumn];
+        let vB = b[sortColumn];
+        if (typeof vA === 'string') return sortAsc ? vA.localeCompare(vB) : vB.localeCompare(vA);
+        return sortAsc ? (vA - vB) : (vB - vA);
+      });
+
+      const tbody = document.getElementById('shopTableBody');
+      tbody.innerHTML = '';
+
+      list.forEach((s, idx) => {
+        const isMall = s.badge.includes('Mall');
+        const badgeHtml = isMall 
+          ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">MALL</span>`
+          : `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700">Shop Thường</span>`;
+
+        const typeHtml = s.type === 'Brand Shop'
+          ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Brand Shop</span>`
+          : `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">Tổng hợp</span>`;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition';
+        tr.innerHTML = `
+          <td class="py-3 px-4 text-center text-slate-500 font-mono">${idx + 1}</td>
+          <td class="py-3 px-4">
+            <div class="font-semibold text-white text-xs hover:text-orange-400 transition">
+              <a href="${s.url}" target="_blank" rel="noopener noreferrer">${s.name}</a>
+            </div>
+            <div class="text-[11px] text-slate-500 font-mono">@${s.username} ${s.brand ? '• ' + s.brand : ''}</div>
+          </td>
+          <td class="py-3 px-3">${badgeHtml}</td>
+          <td class="py-3 px-3">${typeHtml}</td>
+          <td class="py-3 px-3 text-right font-medium text-slate-200">${s.followers.toLocaleString()}</td>
+          <td class="py-3 px-3 text-right font-mono text-slate-300">${s.item_count.toLocaleString()}</td>
+          <td class="py-3 px-3 text-center">
+            <span class="inline-flex items-center gap-1 font-semibold text-amber-400 text-xs">
+              ${s.rating > 0 ? s.rating.toFixed(1) : 'N/A'} <span class="text-[10px]">⭐</span>
+            </span>
+            <div class="text-[10px] text-slate-500">${s.total_ratings.toLocaleString()} đg</div>
+          </td>
+          <td class="py-3 px-3 text-center text-slate-300 font-medium">${s.response_rate}</td>
+          <td class="py-3 px-3 text-slate-400 text-[11px]">${s.city}</td>
+          <td class="py-3 px-4 text-right">
+            <a href="${s.url}" target="_blank" rel="noopener noreferrer" 
+               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[11px] font-medium transition">
+              Xem ↗
+            </a>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('showingCount').innerText = `Đang hiển thị ${list.length} / ${SHOPS_DATA.length} gian hàng`;
+    }
+
+    // ================= TABLE 2: PRODUCTS =================
+    function handleProdSearch() {
+      prodSearchQuery = document.getElementById('prodSearchInput').value.toLowerCase().trim();
+      renderProducts();
+    }
+
+    function renderProducts() {
+      let list = PRODS_DATA.filter(p => {
+        if (!prodSearchQuery) return true;
+        const target = (p.name + ' ' + p.model + ' ' + p.shop + ' ' + p.category).toLowerCase();
+        return target.includes(prodSearchQuery);
+      });
+
+      const tbody = document.getElementById('prodTableBody');
+      tbody.innerHTML = '';
+
+      list.forEach((p, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition';
+        const formattedPrice = p.price > 0 ? p.price.toLocaleString('vi-VN') + ' đ' : 'Liên hệ';
+        const formattedOld = p.original_price > 0 ? p.original_price.toLocaleString('vi-VN') + ' đ' : '';
+        const discBadge = p.discount_rate > 0 
+          ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400">-${p.discount_rate}%</span>` 
+          : `<span class="text-slate-500">-</span>`;
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 text-center font-mono font-bold text-orange-400">${idx + 1}</td>
+          <td class="py-3 px-4 max-w-md">
+            <div class="font-medium text-white hover:text-orange-400 transition line-clamp-1">
+              <a href="${p.url}" target="_blank" rel="noopener noreferrer">${p.name}</a>
+            </div>
+            <div class="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+              <span class="font-mono text-slate-400 bg-slate-800 px-1.5 py-0.2 rounded border border-slate-700">Model: ${p.model}</span>
+            </div>
+          </td>
+          <td class="py-3 px-3">
+            <span class="font-medium text-slate-300">@${p.shop}</span>
+          </td>
+          <td class="py-3 px-3 text-slate-400 text-[11px]">${p.category}</td>
+          <td class="py-3 px-3 text-right">
+            <div class="font-bold text-emerald-400 text-xs">${formattedPrice}</div>
+            ${formattedOld ? `<div class="text-[10px] text-slate-500 line-through">${formattedOld}</div>` : ''}
+          </td>
+          <td class="py-3 px-3 text-center">${discBadge}</td>
+          <td class="py-3 px-3 text-right font-mono font-bold text-white">${p.historical_sold.toLocaleString()}</td>
+          <td class="py-3 px-3 text-right font-mono text-orange-400 font-semibold">${p.sold_monthly > 0 ? p.sold_monthly.toLocaleString() : '-'}</td>
+          <td class="py-3 px-3 text-center text-amber-400 font-medium">
+            ${p.rating.toFixed(1)} ⭐
+          </td>
+          <td class="py-3 px-4 text-right">
+            <a href="${p.url}" target="_blank" rel="noopener noreferrer" 
+               class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-orange-500 text-slate-300 hover:text-white border border-slate-700 text-[11px] transition">
+              Shopee ↗
+            </a>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('showingProdCount').innerText = `Đang hiển thị ${list.length} / ${PRODS_DATA.length} sản phẩm`;
+    }
+
+    // ================= TABLE 3: BRANDS =================
+    function handleBrandSearch() {
+      brandSearchQuery = document.getElementById('brandSearchInput').value.toLowerCase().trim();
+      renderBrands();
+    }
+
+    function renderBrands() {
+      let list = BRANDS_DATA.filter(b => {
+        if (!brandSearchQuery) return true;
+        const target = (b.brand + ' ' + b.type + ' ' + b.shops.join(' ')).toLowerCase();
+        return target.includes(brandSearchQuery);
+      });
+
+      const tbody = document.getElementById('brandTableBody');
+      tbody.innerHTML = '';
+
+      list.forEach((b, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition';
+        const typeHtml = b.type === 'Brand Shop'
+          ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Brand</span>`
+          : `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">Chuỗi bán lẻ</span>`;
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 text-center font-mono text-slate-500">${idx + 1}</td>
+          <td class="py-3 px-4">
+            <div class="font-bold text-white text-xs">${b.brand}</div>
+            <div class="text-[10px] text-slate-500 font-mono">${b.shops.map(s => '@' + s).join(', ')}</div>
+          </td>
+          <td class="py-3 px-3">${typeHtml}</td>
+          <td class="py-3 px-3 text-center font-bold text-slate-300">${b.shop_count}</td>
+          <td class="py-3 px-3 text-right font-medium text-blue-400">${b.followers.toLocaleString()}</td>
+          <td class="py-3 px-3 text-right font-mono text-slate-300">${b.item_count.toLocaleString()}</td>
+          <td class="py-3 px-3 text-right font-mono text-amber-400 font-semibold">${b.scraped_count > 0 ? b.scraped_count : '-'}</td>
+          <td class="py-3 px-3 text-center text-amber-400 font-medium">${b.avg_rating.toFixed(1)} ⭐</td>
+          <td class="py-3 px-4 max-w-xs">
+            <div class="line-clamp-1 text-slate-300 text-xs" title="${b.best_name}">${b.best_name}</div>
+            ${b.best_model ? `<div class="text-[10px] text-slate-500 font-mono">Model: ${b.best_model}</div>` : ''}
+          </td>
+          <td class="py-3 px-3 text-right font-mono font-bold text-emerald-400">${b.best_sold > 0 ? b.best_sold.toLocaleString() : '-'}</td>
+          <td class="py-3 px-4 text-right">
+            <a href="${b.primary_url}" target="_blank" rel="noopener noreferrer" 
+               class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] transition">
+              Xem Shop ↗
+            </a>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('showingBrandCount').innerText = `Đang hiển thị ${list.length} / ${BRANDS_DATA.length} thương hiệu`;
+    }
+
+    // ================= CHARTS =================
+    let chartInstances = {};
+
+    function initCharts() {
+      // Destroy previous
+      Object.values(chartInstances).forEach(c => c && c.destroy && c.destroy());
+      chartInstances = {};
+
+      // 1. Chart Followers (Top 10)
+      const topFollowers = [...SHOPS_DATA].sort((a,b) => b.followers - a.followers).slice(0, 10);
+      const ctxFollowers = document.getElementById('chartFollowers');
+      if (ctxFollowers) {
+        chartInstances.followers = new Chart(ctxFollowers, {
+          type: 'bar',
+          data: {
+            labels: topFollowers.map(s => s.name.length > 18 ? s.name.substring(0, 18) + '...' : s.name),
+            datasets: [{
+              label: 'Người theo dõi (Followers)',
+              data: topFollowers.map(s => s.followers),
+              backgroundColor: 'rgba(249, 115, 22, 0.85)',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    return ctx.parsed.y.toLocaleString() + ' followers';
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: { color: '#94a3b8', font: { size: 10 } },
+                grid: { display: false }
+              },
+              y: {
+                ticks: {
+                  color: '#94a3b8',
+                  font: { size: 10 },
+                  callback: val => val >= 1000 ? (val/1000) + 'k' : val
+                },
+                grid: { color: 'rgba(51, 65, 85, 0.3)' }
+              }
+            }
+          }
+        });
+      }
+
+      // 2. Chart SKU (Top 10)
+      const topSku = [...SHOPS_DATA].sort((a,b) => b.item_count - a.item_count).slice(0, 10);
+      const ctxSku = document.getElementById('chartSku');
+      if (ctxSku) {
+        chartInstances.sku = new Chart(ctxSku, {
+          type: 'bar',
+          data: {
+            labels: topSku.map(s => s.name.length > 18 ? s.name.substring(0, 18) + '...' : s.name),
+            datasets: [{
+              label: 'Số lượng SKU',
+              data: topSku.map(s => s.item_count),
+              backgroundColor: 'rgba(59, 130, 246, 0.85)',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    return ctx.parsed.y.toLocaleString() + ' SKU';
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: { color: '#94a3b8', font: { size: 10 } },
+                grid: { display: false }
+              },
+              y: {
+                ticks: { color: '#94a3b8', font: { size: 10 } },
+                grid: { color: 'rgba(51, 65, 85, 0.3)' }
+              }
+            }
+          }
+        });
+      }
+
+      // 3. Chart Type Donut
+      const brandCount = SHOPS_DATA.filter(s => s.type === 'Brand Shop').length;
+      const genCount = SHOPS_DATA.length - brandCount;
+      const ctxType = document.getElementById('chartType');
+      if (ctxType) {
+        chartInstances.type = new Chart(ctxType, {
+          type: 'doughnut',
+          data: {
+            labels: ['Official Brand Shop', 'Điện máy tổng hợp'],
+            datasets: [{
+              data: [brandCount, genCount],
+              backgroundColor: ['rgba(16, 185, 129, 0.85)', 'rgba(59, 130, 246, 0.85)'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: '#cbd5e1', font: { size: 11 } }
+              }
+            }
+          }
+        });
+      }
+
+      // 4. Chart Mall Donut
+      const mallCount = SHOPS_DATA.filter(s => s.badge.includes('Mall')).length;
+      const nonMallCount = SHOPS_DATA.length - mallCount;
+      const ctxMall = document.getElementById('chartMall');
+      if (ctxMall) {
+        chartInstances.mall = new Chart(ctxMall, {
+          type: 'doughnut',
+          data: {
+            labels: ['Shopee Mall', 'Shop Thường'],
+            datasets: [{
+              data: [mallCount, nonMallCount],
+              backgroundColor: ['rgba(244, 63, 94, 0.85)', 'rgba(100, 116, 139, 0.85)'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: '#cbd5e1', font: { size: 11 } }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // ================= INITIALIZATION =================
+    window.addEventListener('DOMContentLoaded', () => {
+      renderTable();
+      renderProducts();
+      renderBrands();
+      checkAuth();
+    });
+  </script>
+</body>
+</html>
