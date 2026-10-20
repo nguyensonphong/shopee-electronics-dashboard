@@ -7,16 +7,19 @@ Hệ thống bảng điều khiển phân tích & theo dõi dữ liệu thị tr
 - **Đồng bộ bảng dữ liệu:** Lark Base (`Q4q5bLrbSaQu2VskmO5l1xE5gwf`)
 - **Công nghệ cào dữ liệu:** Google Chrome CDP Remote Debugging (port 9222)
 - **Mã truy cập bảo vệ:** `GK-8888`
+- **Ngày cập nhật:** `20/10/2026`
 
 ---
 
 ## 🚀 Tính năng nổi bật
 
-1. **Chỉ mục 45 gian hàng điện máy:** Bao gồm 31 Official Brand Shop và 14 chuỗi bán lẻ / điện máy tổng hợp (Samsung, LG, Sony, Panasonic, Casper, Aqua, Toshiba, Kangaroo, Sunhouse, v.v.).
-2. **Top 100+ Bestsellers:** Bóc tách từ danh mục 2,322 SKU với đầy đủ doanh số bán lũy kế, doanh số bán tháng, giá khuyến mãi, phần trăm giảm và đánh giá sao.
-3. **Thống kê 34 Thương hiệu:** Tổng hợp số gian hàng, lượng người theo dõi, tổng dải sản phẩm và sản phẩm tiêu biểu bán chạy nhất từng thương hiệu.
-4. **Biểu đồ thị trường (Chart.js):** So sánh trực quan lượng Followers, quy mô SKU, tỷ trọng Brand Shop vs Chuỗi bán lẻ và mức độ hiện diện Shopee Mall.
-5. **Cổng bảo mật mật khẩu:** Giao diện xác thực với mật mã `GK-8888` và lưu phiên an toàn.
+1. **Chỉ mục 45 gian hàng điện máy:** Bao gồm 31 Official Brand Shop và 14 chuỗi bán lẻ / điện máy tổng hợp (Samsung, LG, Sony, Panasonic, Casper, Aqua, Toshiba, Kangaroo, Sunhouse, Điện Máy Chợ Lớn, Nguyễn Kim, Siêu thị MediaMart, Pico, Phong Vũ, Gia Khang, ShopDunk, v.v.).
+2. **Quy mô dữ liệu toàn sàn:** Bóc tách sâu **8,190 SKU** từ danh mục của toàn bộ 45 shop, lưu trữ **8,446 snapshot giá** trên Supabase PostgreSQL.
+3. **⚖️ Tab Ma Trận So Sánh Giá Đa Shop (482 Model):** Phân tích đối đầu trực tiếp giữa các chuỗi bán lẻ. Điện Máy Gia Khang đạt **vị thế rẻ nhất sàn ở 54 / 68 model** (tỷ lệ thắng 79.4%). Có bộ lọc realtime theo Hãng, Phân ngành hàng (Cat), tình trạng giá Gia Khang và xem chi tiết từng shop kèm link Shopee.
+4. **Top 100+ Bestsellers:** Phân tích doanh số bán lũy kế, doanh số bán tháng, giá khuyến mãi, phần trăm giảm và đánh giá sao.
+5. **Thống kê 34 Thương hiệu:** Tổng hợp số gian hàng, lượng người theo dõi, tổng dải sản phẩm và sản phẩm tiêu biểu bán chạy nhất từng thương hiệu.
+6. **Biểu đồ thị trường (Chart.js):** So sánh trực quan lượng Followers, quy mô SKU, tỷ trọng Brand Shop vs Chuỗi bán lẻ và mức độ hiện diện Shopee Mall.
+7. **Cổng bảo mật mật khẩu:** Giao diện xác thực với mật mã `GK-8888` và lưu phiên an toàn.
 
 ---
 
